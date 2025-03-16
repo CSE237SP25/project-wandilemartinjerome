@@ -2,10 +2,9 @@
 
 Team Members:
 
-*
-*
-*
-*
+* Wandile Hannah
+* Martin Rivera
+* Jerome Hsing
 
 For each iteration you should answer the following:
 
