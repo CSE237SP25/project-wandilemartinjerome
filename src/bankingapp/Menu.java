@@ -1,4 +1,4 @@
-package bankapp;
+package bankingapp;
 
 public class Menu {
 
