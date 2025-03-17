@@ -6,10 +6,10 @@ import static org.junit.Assert.fail;
 
 import org.junit.jupiter.api.Test;
 
+
 import bankingapp.BankAccount;
 
 public class BankAccountTests {
-	
 	@Test
 	public void testViewEmptyBalance() {
 		BankAccount account = new BankAccount();

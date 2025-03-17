@@ -2,7 +2,7 @@ package bankingapp;
 
 public class BankAccount {
 
-private double balance;
+	private double balance;
 	
 	public BankAccount() {
 		this.balance = 0;
@@ -16,7 +16,7 @@ private double balance;
 	public double getCurrentBalance() {
 		return this.balance;
 	}
-	
+  
 	public void deposit(double amount) {
 		if(amount < 0) {
 			throw new IllegalArgumentException();
