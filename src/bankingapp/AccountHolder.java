@@ -1,8 +1,6 @@
 package bankingapp;
 import java.util.ArrayList;
 public class AccountHolder {
-	private final String first_name;
-	
 	private final String lastname;
 	
 	private final int birthday;
@@ -14,7 +12,6 @@ public class AccountHolder {
 	private ArrayList<Integer> BankAcounts;
 
 	public AccountHolder(){
-		this.first_name = null;
 		this.lastname = null;
 		this.birthday = 0;
 		this.ssn = 0 ;
