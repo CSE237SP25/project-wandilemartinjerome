@@ -16,7 +16,7 @@ public class BankAccountLibrary {
 		}
 	}
 	
-	public boolean findAcount( int hash) {
+	public boolean findAcCount( int hash) {
 		return BankAccountLibrary.containsKey(hash);
 	}
 	
