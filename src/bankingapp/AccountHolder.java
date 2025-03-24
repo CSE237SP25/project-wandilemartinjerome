@@ -22,15 +22,15 @@ public class AccountHolder {
 		this.BankCode = 0;
 	}
 	
-	public void addBankacount(AccountHolder info, int BankAcountCode  ) {
-		if(!info.BankAcounts.contains(BankAcountCode)) {
-			info.BankAcounts.add(BankCode);
+	public void addBankacount(AccountHolder info, int BankAccountCode  ) {
+		if(!info.BankAcounts.contains(BankAccountCode)) {
+			info.BankAcounts.add(BankAccountCode);
 		}
 	}
 	
-	public void removeBankacount(AccountHolder info, int BankAcountCode  ) {
-		if(info.BankAcounts.contains(BankAcountCode)) {
-			info.BankAcounts.remove(BankCode);
+	public void removeBankacount(AccountHolder info, int BankAccountCode  ) {
+		if(info.BankAcounts.contains(BankAccountCode)) {
+			info.BankAcounts.remove(BankAccountCode);
 		}
 	}
 	
@@ -42,8 +42,8 @@ public class AccountHolder {
 		}
 	}
 	
-	public boolean findBankAccount(AccountHolder info, int BankAcountCode) {
-		return info.BankAcounts.contains(BankAcountCode);
+	public boolean findBankAccount(AccountHolder info, int BankAccountCode) {
+		return info.BankAcounts.contains(BankAccountCode);
 	}
 	
 
