@@ -1,15 +1,55 @@
 package tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
 import bankingapp.BankAccount;
 
 public class BankAccountTests {
+    
+    @Test
+    public void testNewAccountHasZeroBalance() {
+        BankAccount account = new BankAccount();
+        assertEquals(0.0, account.getCurrentBalance(), 0.001);
+    }
+    
+    @Test
+    public void testAccountWithInitialBalance() {
+        BankAccount account = new BankAccount();
+        assertEquals(100.0, account.getCurrentBalance(), 0.001);
+    }
+    
+    @Test
+    public void testDeposit() {
+        BankAccount account = new BankAccount();
+        account.deposit(50.0);
+        assertEquals(50.0, account.getCurrentBalance(), 0.001);
+        
+        account.deposit(25.0);
+        assertEquals(75.0, account.getCurrentBalance(), 0.001);
+    }
+    
+    @Test
+    public void testWithdraw() {
+        BankAccount account = new BankAccount(100);
+        account.withdraw(50.0);
+        assertEquals(50.0, account.getCurrentBalance(), 0.001);
+        
+        account.withdraw(25.0);
+        assertEquals(25.0, account.getCurrentBalance(), 0.001);
+    }
+    
+	@Test
+	public void testInsufficientFunds() {
+		BankAccount account = new BankAccount(100);
+		assertThrows(IllegalArgumentException.class, () -> account.withdraw(150.0));
+	}
+
 
 	// Tests for deposit functionality
 	@Test

@@ -19,15 +19,15 @@ public class AccountHolder {
 		this.BankCode = 0;
 	}
 	
-	public void addBankacount(AccountHolder info, int BankAccountCode  ) {
+	public void addBankAccount(AccountHolder info, int BankAccountCode  ) {
 		if(!info.BankAccounts.contains(BankAccountCode)) {
-			info.BankAccounts.add(BankCode);
+			info.BankAccounts.add(BankAccountCode);
 		}
 	}
 	
-	public void removeBankacount(AccountHolder info, int BankAccountCode  ) {
+	public void removeBankAccount(AccountHolder info, int BankAccountCode  ) {
 		if(info.BankAccounts.contains(BankAccountCode)) {
-			info.BankAccounts.remove(BankCode);
+			info.BankAccounts.remove(BankAccountCode);
 		}
 	}
 	
