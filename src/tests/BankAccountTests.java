@@ -1,88 +1,61 @@
 package tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import org.junit.jupiter.api.Test;
-
-
+import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
 import bankingapp.BankAccount;
 
 public class BankAccountTests {
-	@Test
-	public void testViewEmptyBalance() {
-		BankAccount account = new BankAccount();
-		
-		assertEquals(account.getCurrentBalance(), 0, 0.005);
-	}
-	
-	@Test
-	public void testViewSomeBalance() {
-		BankAccount account = new BankAccount(25);
-		
-		assertEquals(account.getCurrentBalance(), 25, 0.005);
-	}
-
-	@Test
-	public void testSimpleDeposit() {
-		//1. Create objects to be tested
-		BankAccount account = new BankAccount();
-		
-		//2. Call the method being tested
-		account.deposit(25);
-		
-		//3. Use assertions to verify results
-		assertEquals(account.getCurrentBalance(), 25.0, 0.005);
-	}
-	
-	@Test
-	public void testNegativeDeposit() {
-		//1. Create object to be tested
-		BankAccount account = new BankAccount();
-
-		try {
-			account.deposit(-25);
-			fail();
-		} catch (IllegalArgumentException e) {
-			assertTrue(e != null);
-		}
-	}
-	
-	@Test
-	public void testNegativeWithdraw() {
-		BankAccount account = new BankAccount();
-
-		try {
-			account.withdraw(-25);
-			fail();
-		} catch (IllegalArgumentException e) {
-			assertTrue(e != null);
-		}
-	}
-	
-	@Test
-	public void testSimpleWithdraw() {
-		//1. Create objects to be tested
-		BankAccount account = new BankAccount(30);
-		
-		//2. Call the method being tested
-		account.withdraw(25);
-		
-		//3. Use assertions to verify results
-		assertEquals(account.getCurrentBalance(), 5.0, 0.005);
-	}
-	
-	@Test
-	public void testOverdraft() {
-		//1. Create objects to be tested
-		BankAccount account = new BankAccount(20);
-		
-		try {
-			account.withdraw(25);
-			fail();
-		} catch (IllegalArgumentException e) {
-			assertTrue(e != null);
-		}
-	}
-}
+    
+    private BankAccount account;
+    private BankAccount accountWithInitialBalance;
+    
+    @Before
+    public void setUp() {
+        account = new BankAccount();
+        accountWithInitialBalance = new BankAccount(100.0);
+    }
+    
+    @Test
+    public void testNewAccountHasZeroBalance() {
+        assertEquals(0.0, account.getCurrentBalance(), 0.001);
+    }
+    
+    @Test
+    public void testAccountWithInitialBalance() {
+        assertEquals(100.0, accountWithInitialBalance.getCurrentBalance(), 0.001);
+    }
+    
+    @Test
+    public void testDeposit() {
+        account.deposit(50.0);
+        assertEquals(50.0, account.getCurrentBalance(), 0.001);
+        
+        account.deposit(25.0);
+        assertEquals(75.0, account.getCurrentBalance(), 0.001);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testNegativeDeposit() {
+        account.deposit(-50.0);
+    }
+    
+    @Test
+    public void testWithdraw() {
+        accountWithInitialBalance.withdraw(50.0);
+        assertEquals(50.0, accountWithInitialBalance.getCurrentBalance(), 0.001);
+        
+        accountWithInitialBalance.withdraw(25.0);
+        assertEquals(25.0, accountWithInitialBalance.getCurrentBalance(), 0.001);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testNegativeWithdraw() {
+        accountWithInitialBalance.withdraw(-50.0);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testInsufficientFunds() {
+        accountWithInitialBalance.withdraw(150.0);
+    }
+} 
