@@ -66,50 +66,39 @@ Team Members:
 
 ## Compilation and Execution Instructions
 
-### Windows (compile_and_run.bat)
-```batch
-@echo off
-echo Compiling Banking Application...
-
-:: Create bin directory if it doesn't exist
-if not exist bin mkdir bin
-
-:: Compile all Java files
-javac -d bin src/bankingapp/*.java
-
-:: Run the application
-echo Running Banking Application...
-java -cp bin bankingapp.Menu
-
-echo Done!
+## Step 1: Clone the Repository
+```bash
+git clone https://github.com/CSE237SP25/project-wandilemartinjerome.git
+cd project-wandilemartinjerome
 ```
 
-### Unix/Linux/Mac (compile_and_run.sh)
+## Step 2: Running Application
+### Windows
 ```bash
-#!/bin/bash
-echo "Compiling Banking Application..."
-
-# Create bin directory if it doesn't exist
-mkdir -p bin
-
-# Compile all Java files
-javac -d bin src/bankingapp/*.java
-
-# Run the application
-echo "Running Banking Application..."
-java -cp bin bankingapp.Menu
-
-echo "Done!"
+.\compile_and_run.bat
+```
+### Unix/Linux/Mac
+```bash
+chmod +x compile_and_run.sh
+./compile_and_run.sh
 ```
 
-### Running Tests
+## Step 3: Using the Banking Application
+After running the application, you'll see a menu with these options:
+* Check Balance
+* Deposit Funds
+* Withdraw Funds
+* View Account Limits
+* Exit
+Enter the number corresponding to your choice and follow the prompts.
 
+## Step 4: Running the Tests
+### Windows
 ```bash
-# Windows
-javac -d bin src/bankingapp/*.java src/tests/*.java
-java -cp bin;lib/junit-4.13.2.jar;lib/junit-jupiter-api-5.9.1.jar;lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore tests.BankAccountTests tests.MenuTests tests.AdminAccountTests
-
-# Unix/Linux/Mac
-javac -d bin src/bankingapp/*.java src/tests/*.java
-java -cp bin:lib/junit-4.13.2.jar:lib/junit-jupiter-api-5.9.1.jar:lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore tests.BankAccountTests tests.MenuTests tests.AdminAccountTests
+.\run_tests.bat
+```
+### Unix/Linux/Mac
+```bash
+chmod +x run_tests.sh
+./run_tests.sh
 ```
