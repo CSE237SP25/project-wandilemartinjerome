@@ -1,9 +1,10 @@
 package bankingapp;
 import java.util.ArrayList;
+import java.util.HashMap;
 public class AccountHolder {
 	private final String lastname;
 	
-	private final int birthday;
+	private final String birthday;
 	
 	private final int ssn;
 	
@@ -13,20 +14,20 @@ public class AccountHolder {
 
 	public AccountHolder(){
 		this.lastname = null;
-		this.birthday = 0;
+		this.birthday = null;
 		this.ssn = 0 ;
 		this.BankAccounts = new ArrayList<Integer>();
 		this.BankCode = 0;
 	}
 	
-	public void addBankacount(AccountHolder info, int BankAccountCode  ) {
-		if(!info.BankAccounts.contains(BankAccountCode)) {
+	public void addBankacount(AccountHolder info, int BankAcountCode  ) {
+		if(!info.BankAccounts.contains(BankAcountCode)) {
 			info.BankAccounts.add(BankCode);
 		}
 	}
 	
-	public void removeBankacount(AccountHolder info, int BankAccountCode  ) {
-		if(info.BankAccounts.contains(BankAccountCode)) {
+	public void removeBankacount(AccountHolder info, int BankAcountCode  ) {
+		if(info.BankAccounts.contains(BankAcountCode)) {
 			info.BankAccounts.remove(BankCode);
 		}
 	}
@@ -39,8 +40,8 @@ public class AccountHolder {
 		}
 	}
 	
-	public boolean findBankAccount(AccountHolder info, int BankAccountCode) {
-		return info.BankAccounts.contains(BankAccountCode);
+	public boolean findBankAccount(AccountHolder info, int BankAcountCode) {
+		return info.BankAccounts.contains(BankAcountCode);
 	}
 	
 
