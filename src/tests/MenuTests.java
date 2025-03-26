@@ -6,8 +6,6 @@ import java.io.ByteArrayOutputStream;
 
 import org.junit.Test;
 
-import bankingapp.Menu;
-
 public class MenuTests {
 	
 }
