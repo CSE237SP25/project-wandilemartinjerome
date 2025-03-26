@@ -4,7 +4,7 @@ echo Compiling Banking Application...
 :: Create bin directory if it doesn't exist
 if not exist bin mkdir bin
 
-:: Compile all Java files
+:: Compile only the main application files (not tests)
 javac -d bin src/bankingapp/*.java
 
 :: Run the application
