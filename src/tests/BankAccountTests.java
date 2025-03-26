@@ -10,26 +10,69 @@ import org.junit.jupiter.api.Test;
 import bankingapp.BankAccount;
 
 public class BankAccountTests {
+    
+    @Test
+    public void testNewAccountHasZeroBalance() {
+        BankAccount account = new BankAccount();
+        assertEquals(0.0, account.getCurrentBalance(), 0.001);
+    }
+    
+    @Test
+    public void testAccountWithInitialBalance() {
+        BankAccount account = new BankAccount();
+        assertEquals(100.0, accountWithInitialBalance.getCurrentBalance(), 0.001);
+    }
+    
+    @Test
+    public void testDeposit() {
+        BankAccount account = new BankAccount();
+        account.deposit(50.0);
+        assertEquals(50.0, account.getCurrentBalance(), 0.001);
+        
+        account.deposit(25.0);
+        assertEquals(75.0, account.getCurrentBalance(), 0.001);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testNegativeDeposit() {
+        BankAccount account = new BankAccount();
+        account.deposit(-50.0);
+    }
+    
+    @Test
+    public void testWithdraw() {
+        BankAccount account = new BankAccount(100);
+        account.withdraw(50.0);
+        assertEquals(50.0, account.getCurrentBalance(), 0.001);
+        
+        BankAccount account.withdraw(25.0);
+        assertEquals(25.0, account.getCurrentBalance(), 0.001);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testNegativeWithdraw() {
+        BankAccount account = new BankAccount(100);
+        account.withdraw(-50.0);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testInsufficientFunds() {
+        BankAccount account = new BankAccount(100);
+        account.withdraw(150.0);
+    }
 
 	// Tests for deposit functionality
 	@Test
 	public void testSimpleDeposit() {
-		//1. Create objects to be tested
-		BankAccount account = new BankAccount();
-		
-		//2. Call the method being tested
+    BankAccount account = new BankAccount(100);
 		account.deposit(25);
-		
-		//3. Use assertions to verify results
 		assertEquals(account.getCurrentBalance(), 25.0, 0.005);
 	}
 	
 	@Test
 	public void testNegativeDeposit() {
-		//1. Create object to be tested
-		BankAccount account = new BankAccount();
-
 		try {
+      BankAccount account = new BankAccount(100);
 			account.deposit(-25);
 			fail();
 		} catch (IllegalArgumentException e) {
@@ -215,3 +258,4 @@ public class BankAccountTests {
 		}
 	}
 }
+

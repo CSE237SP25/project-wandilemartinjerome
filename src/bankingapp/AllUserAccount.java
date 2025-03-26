@@ -3,10 +3,33 @@ package bankingapp;
 import java.util.HashMap;
 
 public class AllUserAccount {
-	private HashMap<Integer, AccountHolder> UserAccounts = new HashMap<>();
-	private HashMap<Integer, Boolean> accountStatus = new HashMap<>(); // Track account status (active/frozen)
+	private HashMap<AccountHolder, Integer> UserAccounts = new HashMap<>();
 	
 	public int AccountNumber(AccountHolder info) {
+		int hashcode = info.hashCode();
+		return hashcode;
+	}
+	
+	public void addAccount(AccountHolder info) {
+		int hash = AccountNumber(info);
+		if(!UserAccounts.containsKey(hash)) {
+			UserAccounts.put(info,hash);
+		}
+	}
+	
+	public boolean findAccount( int hash) {
+		return UserAccounts.containsKey(hash);
+	}
+	
+	public void deleteAccount(AccountHolder info, int hash) {
+		if(UserAccounts.containsKey(hash)) {
+			UserAccounts.put(info,hash);
+		}
+	}
+
+	private HashMap<Integer, Boolean> accountStatus = new HashMap<>(); // Track account status (active/frozen)
+	
+	public int accountNumber(AccountHolder info) {
 		int hashcode = info.hashCode();
 		return hashcode;
 	}
