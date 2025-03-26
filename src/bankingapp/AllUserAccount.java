@@ -3,7 +3,7 @@ package bankingapp;
 import java.util.HashMap;
 
 public class AllUserAccount {
-	private HashMap<AccountHolder, Integer> UserAccounts = new HashMap<>();
+	private HashMap<Integer, AccountHolder> UserAccounts = new HashMap<>();
 	
 	public int AccountNumber(AccountHolder info) {
 		int hashcode = info.hashCode();
@@ -13,7 +13,7 @@ public class AllUserAccount {
 	public void addAccount(AccountHolder info) {
 		int hash = AccountNumber(info);
 		if(!UserAccounts.containsKey(hash)) {
-			UserAccounts.put(info,hash);
+			UserAccounts.put(hash,info);
 		}
 	}
 	
@@ -23,7 +23,7 @@ public class AllUserAccount {
 	
 	public void deleteAccount(AccountHolder info, int hash) {
 		if(UserAccounts.containsKey(hash)) {
-			UserAccounts.put(info,hash);
+			UserAccounts.put(hash,info);
 		}
 	}
 
@@ -37,7 +37,7 @@ public class AllUserAccount {
 	public void AddAcount(AccountHolder info) {
 		int hash = AccountNumber(info);
 		if(!UserAccounts.containsKey(hash)) {
-			UserAccounts.put(hash, info);
+			UserAccounts.put(hash,info);
 			accountStatus.put(hash, true); // Set account as active by default
 		}
 	}
