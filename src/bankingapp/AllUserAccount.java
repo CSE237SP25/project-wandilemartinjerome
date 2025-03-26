@@ -3,7 +3,7 @@ package bankingapp;
 import java.util.HashMap;
 
 public class AllUserAccount {
-	private HashMap<AccountHolder, Integer> UserAccounts = new HashMap<>();
+	private HashMap<Integer, AccountHolder> UserAccounts = new HashMap<>();
 	private HashMap<Integer, Boolean> accountStatus = new HashMap<>(); // Track account status (active/frozen)
 	
 	public int AccountNumber(AccountHolder info) {
@@ -14,7 +14,7 @@ public class AllUserAccount {
 	public void AddAcount(AccountHolder info) {
 		int hash = AccountNumber(info);
 		if(!UserAccounts.containsKey(hash)) {
-			UserAccounts.put(info, hash);
+			UserAccounts.put(hash, info);
 			accountStatus.put(hash, true); // Set account as active by default
 		}
 	}
@@ -25,7 +25,7 @@ public class AllUserAccount {
 	
 	public void deletAccount(AccountHolder info, int hash) {
 		if(UserAccounts.containsKey(hash)) {
-			UserAccounts.remove(info);
+			UserAccounts.remove(hash);
 			accountStatus.remove(hash);
 		}
 	}
