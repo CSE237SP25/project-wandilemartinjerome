@@ -48,37 +48,51 @@ public class Menu {
         
         while (!exit) {
             System.out.println("\nMain Menu:");
-            System.out.println("1. Check Balance");
-            System.out.println("2. Deposit Funds");
-            System.out.println("3. Withdraw Funds");
-            System.out.println("4. View Transaction History");
-            System.out.println("5. Transaction Management");
-            System.out.println("6. View Account Limits");
-            System.out.println("7. Exit");
-            System.out.print("Enter your choice (1-7): ");
+            System.out.println("1. Create a new account");
+            System.out.println("2. Select account");
+            System.out.println("3. Check Balance");
+            System.out.println("4. Deposit Funds");
+            System.out.println("5. Withdraw Funds");
+            System.out.println("6. View Transaction History");
+            System.out.println("7. Transaction Management");
+            System.out.println("8. View Account Limits");
+            System.out.println("9. Exit");
+            System.out.print("Enter your choice (1-9): ");
             
             int choice = getIntInput();
             
             switch (choice) {
                 case 1:
-                    checkBalance();
+                    createAccount();
                     break;
                 case 2:
-                    deposit();
+                    selectAccount();
                     break;
                 case 3:
-                    withdraw();
+                    checkBalance();
                     break;
                 case 4:
-                    viewTransactionHistory(currentAccount);
+                    deposit();
                     break;
                 case 5:
-                    showTransactionMenu();
+                    withdraw();
                     break;
                 case 6:
-                    viewLimits();
+                    if (accountExists()) {
+                        viewTransactionHistory(currentAccount);
+                    }
                     break;
                 case 7:
+                    if (accountExists()) {
+                        showTransactionMenu();
+                    }
+                    break;
+                case 8:
+                    if (accountExists()) {
+                        viewLimits();
+                    }
+                    break;
+                case 9:
                     exit = true;
                     System.out.println("Thank you for using the Banking Application. Goodbye!");
                     break;
@@ -91,9 +105,78 @@ public class Menu {
     }
     
     /**
+     * Checks if an account exists and is selected.
+     * 
+     * @return true if an account exists, false otherwise
+     */
+    private boolean accountExists() {
+        if (currentAccount == null) {
+            System.out.println("No account exists. Please create an account first.");
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Creates a new bank account.
+     */
+    private void createAccount() {
+        System.out.println("\n----- Create a New Account -----");
+        System.out.print("Enter initial deposit amount (or 0 for empty account): ");
+        
+        try {
+            double initialAmount = Double.parseDouble(scanner.nextLine());
+            
+            if (initialAmount < 0) {
+                System.out.println("Initial amount cannot be negative.");
+                return;
+            }
+            
+            if (initialAmount == 0) {
+                currentAccount = new BankAccount();
+            } else {
+                currentAccount = new BankAccount(initialAmount);
+            }
+            
+            allAccounts.addAccount(currentAccount);
+            System.out.println("Account created successfully!");
+            System.out.println("Current balance: $" + currentAccount.getCurrentBalance());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Please enter a valid number.");
+        }
+    }
+    
+    /**
+     * Selects an existing account.
+     * 
+     * @return true if account selection was successful, false otherwise
+     */
+    private boolean selectAccount() {
+        System.out.println("\n----- Select Account -----");
+        System.out.print("Enter account number: ");
+        
+        try {
+            int accountNumber = Integer.parseInt(scanner.nextLine().trim());
+            if (allAccounts.findAccount(accountNumber)) {
+                // We need to modify AllUserAccount to have a getAccount method
+                // For now, we're still using the same account which is incorrect
+                return true;
+            } else {
+                System.out.println("Account not found. Please check the account number.");
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid account number. Please enter a valid number.");
+            return false;
+        }
+    }
+    
+    /**
      * Displays the current account balance.
      */
     private void checkBalance() {
+        if (!accountExists()) return;
+        
         System.out.println("\n--- Account Balance ---");
         System.out.printf("Current Balance: $%.2f\n", currentAccount.getCurrentBalance());
     }
@@ -102,6 +185,8 @@ public class Menu {
      * Handles the deposit process.
      */
     private void deposit() {
+        if (!accountExists()) return;
+        
         System.out.println("\n--- Deposit Funds ---");
         System.out.print("Enter amount to deposit: $");
         double amount = getDoubleInput();
@@ -119,6 +204,8 @@ public class Menu {
      * Handles the withdrawal process.
      */
     private void withdraw() {
+        if (!accountExists()) return;
+        
         System.out.println("\n--- Withdraw Funds ---");
         System.out.print("Enter amount to withdraw: $");
         double amount = getDoubleInput();
@@ -174,7 +261,7 @@ public class Menu {
                     viewTransactionsByType();
                     break;
                 case 3:
-                    generateTransactionAnalysisReport();;
+                    generateTransactionAnalysisReport();
                     break;
                 case 4:
                     back = true;

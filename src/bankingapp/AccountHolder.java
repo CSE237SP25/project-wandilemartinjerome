@@ -1,9 +1,10 @@
 package bankingapp;
 import java.util.ArrayList;
+import java.util.HashMap;
 public class AccountHolder {
 	private final String lastname;
 	
-	private final int birthday;
+	private final String birthday;
 	
 	private final int ssn;
 	
@@ -13,7 +14,7 @@ public class AccountHolder {
 
 	public AccountHolder(){
 		this.lastname = null;
-		this.birthday = 0;
+		this.birthday = null;
 		this.ssn = 0 ;
 		this.BankAccounts = new ArrayList<Integer>();
 		this.BankCode = 0;
