@@ -1,5 +1,9 @@
 package bankingapp;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 /**
  * Represents a bank account with basic operations.
  * 
@@ -19,6 +23,9 @@ public class BankAccount {
     private double maxWithdrawalLimit;
     private double maxDepositLimit;
 
+    // Transaction history
+    private List<Transaction> transactionHistory;
+
     /**
      * Constructs a new bank account with an initial balance of 0.
      */
@@ -37,6 +44,7 @@ public class BankAccount {
         this.balance = initBalance;
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
+        this.transactionHistory = new ArrayList<>();
     }
     
     /**
@@ -50,11 +58,16 @@ public class BankAccount {
         this.balance = initBalance;
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
+        this.transactionHistory = new ArrayList<>();
+        // Record initial deposit if balance is positive
+        if (initBalance > 0) {
+            recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
+        }
     }
 
     /**
      * Returns the current balance of the account.
-     * 
+ * 
      * @return The current balance.
      */
     public double getCurrentBalance() {
@@ -81,6 +94,7 @@ public class BankAccount {
             throw new IllegalArgumentException("Maximum withdrawal limit cannot be negative");
         }
         this.maxWithdrawalLimit = maxLimit;
+        recordTransaction(TransactionType.LIMIT_CHANGE, maxLimit, "Changed withdrawal limit");
     }
     
     /**
@@ -103,6 +117,7 @@ public class BankAccount {
             throw new IllegalArgumentException("Maximum deposit limit cannot be negative");
         }
         this.maxDepositLimit = maxLimit;
+        recordTransaction(TransactionType.LIMIT_CHANGE, maxLimit, "Changed deposit limit");
     }
 
     /**
@@ -121,6 +136,7 @@ public class BankAccount {
         }
         
         this.balance += amount;
+        recordTransaction(TransactionType.DEPOSIT, amount, "Deposit");
     }
 
     /**
@@ -140,10 +156,12 @@ public class BankAccount {
         }
         
         if (amount > this.balance) {
+            recordTransaction(TransactionType.FAILED, amount, "Failed withdrawal - Insufficient funds");
             return false; // Insufficient funds
         }
         
         this.balance -= amount;
+        recordTransaction(TransactionType.WITHDRAWAL, amount, "Withdrawal");
         return true;
     }
 
@@ -164,13 +182,60 @@ public class BankAccount {
         if (this.withdraw(amount)) {
             try {
                 destinationAccount.deposit(amount);
+                recordTransaction(TransactionType.TRANSFER, amount, "Transfer to account " + destinationAccount.hashCode());
                 return true;
             } catch (IllegalArgumentException e) {
                 // If deposit fails, revert the withdrawal
                 this.balance += amount;
+                recordTransaction(TransactionType.FAILED, amount, "Failed transfer - " + e.getMessage());
                 throw e;
             }
         }
         return false;
+    }
+
+    /**
+     * Gets the transaction history for this account.
+     * 
+     * @return A list of all transactions for this account.
+     */
+    public List<Transaction> getTransactionHistory() {
+        return new ArrayList<>(transactionHistory); // Return a copy to prevent modification
+    }
+
+    /**
+     * Gets the transaction history for this account filtered by type.
+     * 
+     * @param type The type of transactions to filter by.
+     * @return A list of transactions of the specified type.
+     */
+    public List<Transaction> getTransactionHistoryByType(TransactionType type) {
+        List<Transaction> filteredTransactions = new ArrayList<>();
+        for (Transaction transaction : transactionHistory) {
+            if (transaction.getType() == type) {
+                filteredTransactions.add(transaction);
+            }
+        }
+        return filteredTransactions;
+    }
+
+    /**
+     * Records a transaction in the transaction history.
+     * 
+     * @param type The type of transaction.
+     * @param amount The amount involved in the transaction.
+     * @param description A description of the transaction.
+     */
+    private void recordTransaction(TransactionType type, double amount, String description) {
+        Transaction transaction = new Transaction(type, amount, description, new Date(), this.balance);
+        transactionHistory.add(transaction);
+    }
+
+    /**
+     * Clears the transaction history.
+     */
+    public void clearTransactionHistory() {
+        transactionHistory.clear();
+        recordTransaction(TransactionType.ADMIN, 0, "Transaction history cleared");
     }
 }

@@ -126,7 +126,7 @@ public class AdminAccount extends AccountHolder {
         }
         
         BankAccount newAccount = new BankAccount(initialBalance);
-        customer.addBankacount(customer, newAccount.hashCode());
+        customer.addBankAccount(customer, newAccount.hashCode());
         
         logAction("Created new account for customer: " + customer.hashCode());
         return newAccount;
