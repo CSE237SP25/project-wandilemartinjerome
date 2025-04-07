@@ -64,6 +64,7 @@ After running the application, you'll see a menu with these options:
 * View Personal Information
 * Change Password
 * Exit
+  
 Enter the number corresponding to your choice and follow the prompts.
 
 ## Step 4: Running the Tests
