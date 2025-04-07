@@ -61,6 +61,8 @@ After running the application, you'll see a menu with these options:
 * View Transaction History
 * Transaction Management
 * View Account Limits
+* View Personal Information
+* Change Password
 * Exit
 Enter the number corresponding to your choice and follow the prompts.
 
