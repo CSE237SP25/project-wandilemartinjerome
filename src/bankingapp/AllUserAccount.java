@@ -31,6 +31,13 @@ public class AllUserAccount {
 		return BankAccounts.get(hash);
 	}
 	
+	public AccountHolder returnAccount(int hash) {
+		if(!UserAccounts.containsKey(hash)) {
+			return UserAccounts.get(hash);
+		}
+		return null;
+	}
+	
 	public void deleteAccount(AccountHolder info, int hash) {
 		if(UserAccounts.containsKey(hash)) {
 			UserAccounts.put(hash,info);
@@ -51,6 +58,7 @@ public class AllUserAccount {
 			accountStatus.put(hash, true); // Set account as active by default
 		}
 	}
+	
 	
 	public boolean findAcount(int hash) {
 		return UserAccounts.containsKey(hash);
