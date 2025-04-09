@@ -33,6 +33,7 @@ public class BankAccount {
         this.balance = 0;
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
+        this.transactionHistory = new ArrayList<>();
     }
 
     /**
@@ -45,6 +46,10 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        // Record initial deposit if balance is positive
+        if (initBalance > 0) {
+            recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
+        }
     }
     
     /**
@@ -67,7 +72,7 @@ public class BankAccount {
 
     /**
      * Returns the current balance of the account.
- * 
+     * 
      * @return The current balance.
      */
     public double getCurrentBalance() {
@@ -143,8 +148,8 @@ public class BankAccount {
      * Withdraws the specified amount from the account if possible
      * 
      * @param amount The amount of money to withdraw
-     * @return true if the withdrawal was successful, false otherwise
-     * @throws IllegalArgumentException if the withdrawal amount is negative or exceeds the maximum withdrawal limit
+     * @return true if the withdrawal was successful
+     * @throws IllegalArgumentException if the withdrawal amount is negative, exceeds the maximum withdrawal limit, or if there are insufficient funds
      */
     public boolean withdraw(double amount) {
         if (amount < 0) {
@@ -157,7 +162,7 @@ public class BankAccount {
         
         if (amount > this.balance) {
             recordTransaction(TransactionType.FAILED, amount, "Failed withdrawal - Insufficient funds");
-            return false; // Insufficient funds
+            throw new IllegalArgumentException("Insufficient funds");
         }
         
         this.balance -= amount;
@@ -170,28 +175,36 @@ public class BankAccount {
      * 
      * @param destinationAccount The account to transfer funds to
      * @param amount The amount to transfer
-     * @return true if transfer was successful, false otherwise
-     * @throws IllegalArgumentException if amount is negative or destination is null
+     * @return true if transfer was successful
+     * @throws IllegalArgumentException if amount is negative, destination is null, or if there are insufficient funds
      */
     public boolean transfer(BankAccount destinationAccount, double amount) {
         if (destinationAccount == null) {
             throw new IllegalArgumentException("Destination account cannot be null");
         }
 
-        // Use withdraw method to check if we can withdraw the amount
-        if (this.withdraw(amount)) {
-            try {
-                destinationAccount.deposit(amount);
-                recordTransaction(TransactionType.TRANSFER, amount, "Transfer to account " + destinationAccount.hashCode());
-                return true;
-            } catch (IllegalArgumentException e) {
-                // If deposit fails, revert the withdrawal
-                this.balance += amount;
-                recordTransaction(TransactionType.FAILED, amount, "Failed transfer - " + e.getMessage());
-                throw e;
-            }
+        if (amount < 0) {
+            throw new IllegalArgumentException("Transfer amount cannot be negative");
         }
-        return false;
+
+        try {
+            if (this.withdraw(amount)) {
+                try {
+                    destinationAccount.deposit(amount);
+                    recordTransaction(TransactionType.TRANSFER, amount, "Transfer to account " + destinationAccount.hashCode());
+                    return true;
+                } catch (IllegalArgumentException e) {
+                    // If deposit fails, revert the withdrawal
+                    this.balance += amount;
+                    recordTransaction(TransactionType.FAILED, amount, "Failed transfer - " + e.getMessage());
+                    throw e;
+                }
+            }
+            return false;
+        } catch (IllegalArgumentException e) {
+            recordTransaction(TransactionType.FAILED, amount, "Failed transfer - " + e.getMessage());
+            throw e;
+        }
     }
 
     /**

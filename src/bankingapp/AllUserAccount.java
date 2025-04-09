@@ -1,24 +1,34 @@
 package bankingapp;
 
 import java.util.HashMap;
+import java.util.Collection;
 
 public class AllUserAccount {
 	private HashMap<Integer, AccountHolder> UserAccounts = new HashMap<>();
+	private HashMap<Integer, BankAccount> BankAccounts = new HashMap<>();
 	
 	public int AccountNumber(AccountHolder info) {
 		int hashcode = info.hashCode();
 		return hashcode;
 	}
 	
-	public void addAccount(AccountHolder info) {
-		int hash = AccountNumber(info);
-		if(!UserAccounts.containsKey(hash)) {
-			UserAccounts.put(hash,info);
+	public int BankAccountNumber(BankAccount account) {
+		return account.hashCode();
+	}
+	
+	public void addAccount(BankAccount currentAccount) {
+		int hash = BankAccountNumber(currentAccount);
+		if(!BankAccounts.containsKey(hash)) {
+			BankAccounts.put(hash,currentAccount);
 		}
 	}
 	
 	public boolean findAccount( int hash) {
-		return UserAccounts.containsKey(hash);
+		return BankAccounts.containsKey(hash);
+	}
+	
+	public BankAccount getAccount(int hash) {
+		return BankAccounts.get(hash);
 	}
 	
 	public AccountHolder returnAccount(int hash) {
@@ -133,5 +143,14 @@ public class AllUserAccount {
 	 */
 	public int getFrozenAccountCount() {
 		return accountStatus.size() - getActiveAccountCount();
+	}
+	
+	/**
+	 * Gets all account holders in the system
+	 * 
+	 * @return A collection of all account holders
+	 */
+	public Collection<AccountHolder> getAccountHolders() {
+		return UserAccounts.values();
 	}
 }

@@ -54,4 +54,19 @@ public class BankAccountLibraryTests {
         // The account should no longer be found after deletion
         assertFalse(library.findAccount(hash));
     }
+    
+    @Test
+    public void testGetAccountBalance() {
+        // Test with existing account
+        library.addAccount(account);
+        int hash = library.BankAccountNumber(account);
+        assertEquals(100.0, library.getAccountBalance(hash), 0.001);
+        
+        // Test with non-existent account
+        assertEquals(-1.0, library.getAccountBalance(12345), 0.001);
+        
+        // Test after modifying balance
+        account.deposit(50.0);
+        assertEquals(150.0, library.getAccountBalance(hash), 0.001);
+    }
 } 
