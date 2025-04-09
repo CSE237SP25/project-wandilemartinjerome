@@ -95,8 +95,7 @@ public class BankAccountTests {
     @Test
     public void testInsufficientFundsWithdrawal() {
         BankAccount account = new BankAccount(25.0);
-        boolean result = account.withdraw(50.0);
-        assertFalse(result);
+        assertThrows(IllegalArgumentException.class, () -> account.withdraw(50.0));
         assertEquals(25.0, account.getCurrentBalance(), 0.005);
     }
 
@@ -115,8 +114,8 @@ public class BankAccountTests {
     public void testInsufficientFundsTransfer() {
         BankAccount sourceAccount = new BankAccount(20.0);
         BankAccount destinationAccount = new BankAccount(50.0);
-        boolean result = sourceAccount.transfer(destinationAccount, 25.0);
-        assertFalse(result);
+        assertThrows(IllegalArgumentException.class, () -> 
+            sourceAccount.transfer(destinationAccount, 25.0));
         assertEquals(20.0, sourceAccount.getCurrentBalance(), 0.005);
         assertEquals(50.0, destinationAccount.getCurrentBalance(), 0.005);
     }
