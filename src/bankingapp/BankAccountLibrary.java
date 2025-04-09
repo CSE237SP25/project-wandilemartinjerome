@@ -26,13 +26,6 @@ public class BankAccountLibrary {
 		}
 	}
 	
-
-	public BankAccount returnBankaccount(int hash) {
-		if(BankAccountLibrary.containsKey(hash)) {
-			return BankAccountLibrary.get(hash);
-		};
-		return null;
-}
 	public double getAccountBalance(int hash) {
 		if (BankAccountLibrary.containsKey(hash)) {
 			return BankAccountLibrary.get(hash).getCurrentBalance();
