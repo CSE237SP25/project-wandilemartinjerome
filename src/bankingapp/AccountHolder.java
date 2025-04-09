@@ -2,13 +2,13 @@ package bankingapp;
 import java.util.ArrayList;
 import java.util.HashMap;
 public class AccountHolder {
-	private final String lastname;
+	String lastname;
 	
-	private final String birthday;
+	String birthday;
 	
-	private final int ssn;
+	int ssn;
 	
-	private final int BankCode;
+    int BankCode;
 	
 	private ArrayList<Integer> BankAccounts;
 
