@@ -44,5 +44,8 @@ public class AccountHolder {
 		return info.BankAccounts.contains(BankAccountCode);
 	}
 	
+	public String getLastname() {
+		return this.lastname;
+	}
 
 }

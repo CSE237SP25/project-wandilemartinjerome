@@ -25,4 +25,11 @@ public class BankAccountLibrary {
 			BankAccountLibrary.remove(hash);
 		}
 	}
+	
+	public BankAccount returnBankaccount(int hash) {
+		if(BankAccountLibrary.containsKey(hash)) {
+			return BankAccountLibrary.get(hash);
+		};
+		return null;
+	}
 }
