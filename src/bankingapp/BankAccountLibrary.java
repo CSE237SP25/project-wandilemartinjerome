@@ -25,4 +25,11 @@ public class BankAccountLibrary {
 			BankAccountLibrary.remove(hash);
 		}
 	}
+	
+	public double getAccountBalance(int hash) {
+		if (BankAccountLibrary.containsKey(hash)) {
+			return BankAccountLibrary.get(hash).getCurrentBalance();
+		}
+		return -1; // Return -1 if account not found
+	}
 }

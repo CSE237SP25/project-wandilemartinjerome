@@ -16,6 +16,7 @@ public class Menu {
     private BankAccount currentAccount;
     private AllUserAccount allAccounts;
     private AdminAccount adminAccount;
+    private AccountHolder currentAccountHolder;
     
     /**
      * Constructs a new Menu with initialized components.
@@ -25,6 +26,7 @@ public class Menu {
         currentAccount = new BankAccount(1000.0); // Default account with $1000
         allAccounts = new AllUserAccount();
         adminAccount = new AdminAccount();
+        currentAccountHolder = new AccountHolder();
     }
     
     /**
@@ -56,8 +58,10 @@ public class Menu {
             System.out.println("6. View Transaction History");
             System.out.println("7. Transaction Management");
             System.out.println("8. View Account Limits");
-            System.out.println("9. Exit");
-            System.out.print("Enter your choice (1-9): ");
+            System.out.println("9. View Personal Information");
+            System.out.println("10. Change Password");
+            System.out.println("11. Exit");
+            System.out.print("Enter your choice (1-11): ");
             
             int choice = getIntInput();
             
@@ -93,6 +97,12 @@ public class Menu {
                     }
                     break;
                 case 9:
+                    viewPersonalInfo();
+                    break;
+                case 10:
+                    changePassword();
+                    break;
+                case 11:
                     exit = true;
                     System.out.println("Thank you for using the Banking Application. Goodbye!");
                     break;
@@ -122,7 +132,31 @@ public class Menu {
      */
     private void createAccount() {
         System.out.println("\n----- Create a New Account -----");
-        System.out.print("Enter initial deposit amount (or 0 for empty account): ");
+        
+        // Get account holder information
+        System.out.println("\nPlease enter your personal information:");
+        System.out.print("Last Name: ");
+        String lastName = scanner.nextLine();
+        
+        System.out.print("Birthday (MM/DD/YYYY): ");
+        String birthday = scanner.nextLine();
+        
+        System.out.print("Social Security Number (SSN): ");
+        int ssn = getIntInput();
+        
+        System.out.print("Bank Code: ");
+        int bankCode = getIntInput();
+        
+        // Create new account holder with personal information
+        currentAccountHolder = new AccountHolder();
+        currentAccountHolder.setPersonalInfo(lastName, birthday, ssn, bankCode);
+        currentAccountHolder.setPassword("default123"); // Set a default password
+        currentAccountHolder.hidePersonalInfo(); // Hide personal info by default
+        
+        // Add account holder to the system
+        allAccounts.AddAcount(currentAccountHolder);
+        
+        System.out.print("\nEnter initial deposit amount (or 0 for empty account): ");
         
         try {
             double initialAmount = Double.parseDouble(scanner.nextLine());
@@ -139,8 +173,16 @@ public class Menu {
             }
             
             allAccounts.addAccount(currentAccount);
-            System.out.println("Account created successfully!");
+            System.out.println("\nAccount created successfully!");
+            System.out.println("Account number: " + currentAccount.hashCode());
             System.out.println("Current balance: $" + currentAccount.getCurrentBalance());
+            
+            // Link the bank account to the account holder
+            currentAccountHolder.addBankAccount(currentAccountHolder, currentAccount.hashCode());
+            
+            System.out.println("\nYour personal information has been saved.");
+            System.out.println("Default password is: default123");
+            System.out.println("Please change your password for security.");
         } catch (NumberFormatException e) {
             System.out.println("Invalid amount. Please enter a valid number.");
         }
@@ -158,8 +200,13 @@ public class Menu {
         try {
             int accountNumber = Integer.parseInt(scanner.nextLine().trim());
             if (allAccounts.findAccount(accountNumber)) {
-                // We need to modify AllUserAccount to have a getAccount method
-                // For now, we're still using the same account which is incorrect
+                currentAccount = allAccounts.getAccount(accountNumber);
+                // Find the account holder associated with this account
+                currentAccountHolder = findAccountHolder(accountNumber);
+                if (currentAccountHolder == null) {
+                    System.out.println("Warning: No account holder information found for this account.");
+                }
+                System.out.println("Account selected successfully!");
                 return true;
             } else {
                 System.out.println("Account not found. Please check the account number.");
@@ -169,6 +216,23 @@ public class Menu {
             System.out.println("Invalid account number. Please enter a valid number.");
             return false;
         }
+    }
+    
+    /**
+     * Finds the account holder associated with a bank account
+     * 
+     * @param accountNumber The bank account number to find the holder for
+     * @return The AccountHolder object if found, null otherwise
+     */
+    private AccountHolder findAccountHolder(int accountNumber) {
+        // This is a simplified implementation - in a real system, you'd want a more robust
+        // way to associate accounts with account holders
+        for (AccountHolder holder : allAccounts.getAccountHolders()) {
+            if (holder.findBankAccount(holder, accountNumber)) {
+                return holder;
+            }
+        }
+        return null;
     }
     
     /**
@@ -543,5 +607,60 @@ public class Menu {
         int failedCount = 0;
         Transaction largestDeposit = null;
         Transaction largestWithdrawal = null;
+    }
+
+    /**
+     * Displays the account holder's personal information.
+     */
+    private void viewPersonalInfo() {
+        if (currentAccountHolder == null) {
+            System.out.println("No account holder information available.");
+            return;
+        }
+
+        System.out.println("\n--- Personal Information ---");
+        
+        // Always require password for personal info
+        System.out.print("Enter password to view personal information: ");
+        String password = scanner.nextLine();
+        
+        String info = currentAccountHolder.getPersonalInfo(password);
+        if (info == null) {
+            System.out.println("Incorrect password. Access denied.");
+            return;
+        }
+        
+        System.out.println("\nPersonal Information:");
+        System.out.println(info);
+        
+        // Offer to change password
+        System.out.print("\nWould you like to change your password? (y/n): ");
+        String changePassword = scanner.nextLine().toLowerCase();
+        if (changePassword.equals("y")) {
+            changePassword();
+        }
+    }
+    
+    /**
+     * Allows the user to change their password.
+     */
+    private void changePassword() {
+        System.out.print("Enter current password: ");
+        String currentPassword = scanner.nextLine();
+        
+        // Verify current password
+        if (!currentAccountHolder.showPersonalInfo(currentPassword)) {
+            System.out.println("Incorrect current password. Password change failed.");
+            return;
+        }
+        
+        System.out.print("Enter new password: ");
+        String newPassword = scanner.nextLine();
+        
+        // Set new password and hide personal info again
+        currentAccountHolder.setPassword(newPassword);
+        currentAccountHolder.hidePersonalInfo();
+        
+        System.out.println("Password changed successfully!");
     }
 }
