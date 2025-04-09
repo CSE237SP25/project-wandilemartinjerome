@@ -1,12 +1,45 @@
 package bankingapp;
 
 import java.util.HashMap;
+import java.util.Collection;
 
 public class AllUserAccount {
-	private HashMap<AccountHolder, Integer> UserAccounts = new HashMap<>();
-	private HashMap<Integer, Boolean> accountStatus = new HashMap<>(); // Track account status (active/frozen)
+	private HashMap<Integer, AccountHolder> UserAccounts = new HashMap<>();
+	private HashMap<Integer, BankAccount> BankAccounts = new HashMap<>();
 	
 	public int AccountNumber(AccountHolder info) {
+		int hashcode = info.hashCode();
+		return hashcode;
+	}
+	
+	public int BankAccountNumber(BankAccount account) {
+		return account.hashCode();
+	}
+	
+	public void addAccount(BankAccount currentAccount) {
+		int hash = BankAccountNumber(currentAccount);
+		if(!BankAccounts.containsKey(hash)) {
+			BankAccounts.put(hash,currentAccount);
+		}
+	}
+	
+	public boolean findAccount( int hash) {
+		return BankAccounts.containsKey(hash);
+	}
+	
+	public BankAccount getAccount(int hash) {
+		return BankAccounts.get(hash);
+	}
+	
+	public void deleteAccount(AccountHolder info, int hash) {
+		if(UserAccounts.containsKey(hash)) {
+			UserAccounts.put(hash,info);
+		}
+	}
+
+	private HashMap<Integer, Boolean> accountStatus = new HashMap<>(); // Track account status (active/frozen)
+	
+	public int accountNumber(AccountHolder info) {
 		int hashcode = info.hashCode();
 		return hashcode;
 	}
@@ -14,7 +47,7 @@ public class AllUserAccount {
 	public void AddAcount(AccountHolder info) {
 		int hash = AccountNumber(info);
 		if(!UserAccounts.containsKey(hash)) {
-			UserAccounts.put(info, hash);
+			UserAccounts.put(hash,info);
 			accountStatus.put(hash, true); // Set account as active by default
 		}
 	}
@@ -25,7 +58,7 @@ public class AllUserAccount {
 	
 	public void deletAccount(AccountHolder info, int hash) {
 		if(UserAccounts.containsKey(hash)) {
-			UserAccounts.remove(info);
+			UserAccounts.remove(hash);
 			accountStatus.remove(hash);
 		}
 	}
@@ -102,5 +135,14 @@ public class AllUserAccount {
 	 */
 	public int getFrozenAccountCount() {
 		return accountStatus.size() - getActiveAccountCount();
+	}
+	
+	/**
+	 * Gets all account holders in the system
+	 * 
+	 * @return A collection of all account holders
+	 */
+	public Collection<AccountHolder> getAccountHolders() {
+		return UserAccounts.values();
 	}
 }

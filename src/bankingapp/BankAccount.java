@@ -1,5 +1,9 @@
 package bankingapp;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 /**
  * Represents a bank account with basic operations.
  * 
@@ -19,6 +23,9 @@ public class BankAccount {
     private double maxWithdrawalLimit;
     private double maxDepositLimit;
 
+    // Transaction history
+    private List<Transaction> transactionHistory;
+
     /**
      * Constructs a new bank account with an initial balance of 0.
      */
@@ -26,6 +33,7 @@ public class BankAccount {
         this.balance = 0;
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
+        this.transactionHistory = new ArrayList<>();
     }
 
     /**
@@ -37,6 +45,11 @@ public class BankAccount {
         this.balance = initBalance;
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
+        this.transactionHistory = new ArrayList<>();
+        // Record initial deposit if balance is positive
+        if (initBalance > 0) {
+            recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
+        }
     }
     
     /**
@@ -50,6 +63,11 @@ public class BankAccount {
         this.balance = initBalance;
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
+        this.transactionHistory = new ArrayList<>();
+        // Record initial deposit if balance is positive
+        if (initBalance > 0) {
+            recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
+        }
     }
 
     /**
@@ -81,6 +99,7 @@ public class BankAccount {
             throw new IllegalArgumentException("Maximum withdrawal limit cannot be negative");
         }
         this.maxWithdrawalLimit = maxLimit;
+        recordTransaction(TransactionType.LIMIT_CHANGE, maxLimit, "Changed withdrawal limit");
     }
     
     /**
@@ -103,6 +122,7 @@ public class BankAccount {
             throw new IllegalArgumentException("Maximum deposit limit cannot be negative");
         }
         this.maxDepositLimit = maxLimit;
+        recordTransaction(TransactionType.LIMIT_CHANGE, maxLimit, "Changed deposit limit");
     }
 
     /**
@@ -121,14 +141,15 @@ public class BankAccount {
         }
         
         this.balance += amount;
+        recordTransaction(TransactionType.DEPOSIT, amount, "Deposit");
     }
 
     /**
      * Withdraws the specified amount from the account if possible
      * 
      * @param amount The amount of money to withdraw
-     * @return true if the withdrawal was successful, false otherwise
-     * @throws IllegalArgumentException if the withdrawal amount is negative or exceeds the maximum withdrawal limit
+     * @return true if the withdrawal was successful
+     * @throws IllegalArgumentException if the withdrawal amount is negative, exceeds the maximum withdrawal limit, or if there are insufficient funds
      */
     public boolean withdraw(double amount) {
         if (amount < 0) {
@@ -140,10 +161,12 @@ public class BankAccount {
         }
         
         if (amount > this.balance) {
-            return false; // Insufficient funds
+            recordTransaction(TransactionType.FAILED, amount, "Failed withdrawal - Insufficient funds");
+            throw new IllegalArgumentException("Insufficient funds");
         }
         
         this.balance -= amount;
+        recordTransaction(TransactionType.WITHDRAWAL, amount, "Withdrawal");
         return true;
     }
 
@@ -152,25 +175,80 @@ public class BankAccount {
      * 
      * @param destinationAccount The account to transfer funds to
      * @param amount The amount to transfer
-     * @return true if transfer was successful, false otherwise
-     * @throws IllegalArgumentException if amount is negative or destination is null
+     * @return true if transfer was successful
+     * @throws IllegalArgumentException if amount is negative, destination is null, or if there are insufficient funds
      */
     public boolean transfer(BankAccount destinationAccount, double amount) {
         if (destinationAccount == null) {
             throw new IllegalArgumentException("Destination account cannot be null");
         }
 
-        // Use withdraw method to check if we can withdraw the amount
-        if (this.withdraw(amount)) {
-            try {
-                destinationAccount.deposit(amount);
-                return true;
-            } catch (IllegalArgumentException e) {
-                // If deposit fails, revert the withdrawal
-                this.balance += amount;
-                throw e;
+        if (amount < 0) {
+            throw new IllegalArgumentException("Transfer amount cannot be negative");
+        }
+
+        try {
+            if (this.withdraw(amount)) {
+                try {
+                    destinationAccount.deposit(amount);
+                    recordTransaction(TransactionType.TRANSFER, amount, "Transfer to account " + destinationAccount.hashCode());
+                    return true;
+                } catch (IllegalArgumentException e) {
+                    // If deposit fails, revert the withdrawal
+                    this.balance += amount;
+                    recordTransaction(TransactionType.FAILED, amount, "Failed transfer - " + e.getMessage());
+                    throw e;
+                }
+            }
+            return false;
+        } catch (IllegalArgumentException e) {
+            recordTransaction(TransactionType.FAILED, amount, "Failed transfer - " + e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
+     * Gets the transaction history for this account.
+     * 
+     * @return A list of all transactions for this account.
+     */
+    public List<Transaction> getTransactionHistory() {
+        return new ArrayList<>(transactionHistory); // Return a copy to prevent modification
+    }
+
+    /**
+     * Gets the transaction history for this account filtered by type.
+     * 
+     * @param type The type of transactions to filter by.
+     * @return A list of transactions of the specified type.
+     */
+    public List<Transaction> getTransactionHistoryByType(TransactionType type) {
+        List<Transaction> filteredTransactions = new ArrayList<>();
+        for (Transaction transaction : transactionHistory) {
+            if (transaction.getType() == type) {
+                filteredTransactions.add(transaction);
             }
         }
-        return false;
+        return filteredTransactions;
+    }
+
+    /**
+     * Records a transaction in the transaction history.
+     * 
+     * @param type The type of transaction.
+     * @param amount The amount involved in the transaction.
+     * @param description A description of the transaction.
+     */
+    private void recordTransaction(TransactionType type, double amount, String description) {
+        Transaction transaction = new Transaction(type, amount, description, new Date(), this.balance);
+        transactionHistory.add(transaction);
+    }
+
+    /**
+     * Clears the transaction history.
+     */
+    public void clearTransactionHistory() {
+        transactionHistory.clear();
+        recordTransaction(TransactionType.ADMIN, 0, "Transaction history cleared");
     }
 }
