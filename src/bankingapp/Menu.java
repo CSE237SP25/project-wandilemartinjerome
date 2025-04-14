@@ -14,7 +14,7 @@ import java.text.SimpleDateFormat;
 public class Menu {
     private Scanner scanner;
     private BankAccount currentAccount;
-    private AllUserAccount allAccounts;
+    private BankAccountDatabase accountDatabase;
     private AdminAccount adminAccount;
     private AccountHolder currentAccountHolder;
     
@@ -24,7 +24,7 @@ public class Menu {
     public Menu() {
         scanner = new Scanner(System.in);
         currentAccount = new BankAccount(1000.0); // Default account with $1000
-        allAccounts = new AllUserAccount();
+        accountDatabase = new BankAccountDatabase();
         adminAccount = new AdminAccount();
         currentAccountHolder = new AccountHolder();
     }
@@ -154,7 +154,7 @@ public class Menu {
         currentAccountHolder.hidePersonalInfo(); // Hide personal info by default
         
         // Add account holder to the system
-        allAccounts.AddAcount(currentAccountHolder);
+        accountDatabase.addAccountHolder(currentAccountHolder);
         
         System.out.print("\nEnter initial deposit amount (or 0 for empty account): ");
         
@@ -172,7 +172,7 @@ public class Menu {
                 currentAccount = new BankAccount(initialAmount);
             }
             
-            allAccounts.addAccount(currentAccount);
+            accountDatabase.addBankAccount(currentAccount);
             System.out.println("\nAccount created successfully!");
             System.out.println("Account number: " + currentAccount.hashCode());
             System.out.println("Current balance: $" + currentAccount.getCurrentBalance());
@@ -199,8 +199,8 @@ public class Menu {
         
         try {
             int accountNumber = Integer.parseInt(scanner.nextLine().trim());
-            if (allAccounts.findAccount(accountNumber)) {
-                currentAccount = allAccounts.getAccount(accountNumber);
+            if (accountDatabase.hasBankAccount(accountNumber)) {
+                currentAccount = accountDatabase.getBankAccount(accountNumber);
                 // Find the account holder associated with this account
                 currentAccountHolder = findAccountHolder(accountNumber);
                 if (currentAccountHolder == null) {
@@ -227,7 +227,7 @@ public class Menu {
     private AccountHolder findAccountHolder(int accountNumber) {
         // This is a simplified implementation - in a real system, you'd want a more robust
         // way to associate accounts with account holders
-        for (AccountHolder holder : allAccounts.getAccountHolders()) {
+        for (AccountHolder holder : accountDatabase.getAccountHolders()) {
             if (holder.findBankAccount(holder, accountNumber)) {
                 return holder;
             }
