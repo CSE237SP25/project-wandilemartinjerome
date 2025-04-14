@@ -36,11 +36,12 @@ public class BankAccountDatabaseTest {
 
     @Test
     public void testAddAndFindBankAccount() {
-        int accountNumber = database.generateBankAccountNumber(bankAccount);
-        database.addBankAccount(bankAccount);
-        
+        BankAccount account = new BankAccount(500.0);
+        int accountNumber = database.generateBankAccountNumber(account);
+        database.addBankAccount(account);
+
         assertTrue(database.hasBankAccount(accountNumber));
-        assertEquals(bankAccount, database.getBankAccount(accountNumber));
+        assertEquals(account, database.getBankAccount(accountNumber));
     }
 
     @Test
@@ -55,9 +56,10 @@ public class BankAccountDatabaseTest {
 
     @Test
     public void testRemoveBankAccount() {
-        int accountNumber = database.generateBankAccountNumber(bankAccount);
-        database.addBankAccount(bankAccount);
-        
+        BankAccount account = new BankAccount(500.0);
+        int accountNumber = database.generateBankAccountNumber(account);
+        database.addBankAccount(account);
+
         assertTrue(database.hasBankAccount(accountNumber));
         database.removeBankAccount(accountNumber);
         assertFalse(database.hasBankAccount(accountNumber));
@@ -108,4 +110,15 @@ public class BankAccountDatabaseTest {
         
         assertEquals(2, database.getAccountHolders().size());
     }
-} 
+
+    @Test
+    public void testGetAccountBalance() {
+        BankAccount account = new BankAccount(500.0);
+        int accountNumber = database.generateBankAccountNumber(account);
+        database.addBankAccount(account);
+
+        assertEquals(500.0, database.getAccountBalance(accountNumber), 0.01);
+        database.removeBankAccount(accountNumber);
+        assertEquals(-1, database.getAccountBalance(accountNumber), 0.01); // Account not found
+    }
+}
