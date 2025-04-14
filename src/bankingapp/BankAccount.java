@@ -14,6 +14,7 @@ import java.util.List;
 public class BankAccount {
 
     private double balance;
+    private AccountType accountType;
     
     // Default maximum values for transactions
     private static final double DEFAULT_MAX_WITHDRAWAL = 1000.0;
@@ -37,6 +38,19 @@ public class BankAccount {
     }
 
     /**
+     * Constructs a new bank account with an initial balance of 0 and a specified account type.
+     * 
+     * @param accountType The type of account (CHECKING or SAVINGS).
+     */
+    public BankAccount(AccountType accountType) {
+        this.balance = 0;
+        this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
+        this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
+        this.transactionHistory = new ArrayList<>();
+        this.accountType = accountType;
+    }
+
+    /**
      * Constructs a new bank account with the specified initial balance.
      * 
      * @param initBalance The initial balance of the account.
@@ -46,6 +60,24 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        // Record initial deposit if balance is positive
+        if (initBalance > 0) {
+            recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
+        }
+    }
+
+    /**
+     * Constructs a new bank account with the specified initial balance and account type.
+     * 
+     * @param initBalance The initial balance of the account.
+     * @param accountType The type of account (CHECKING or SAVINGS).
+     */
+    public BankAccount(double initBalance, AccountType accountType) {
+        this.balance = initBalance;
+        this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
+        this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
+        this.transactionHistory = new ArrayList<>();
+        this.accountType = accountType;
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -64,6 +96,26 @@ public class BankAccount {
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
         this.transactionHistory = new ArrayList<>();
+        // Record initial deposit if balance is positive
+        if (initBalance > 0) {
+            recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
+        }
+    }
+
+    /**
+     * Constructs a new bank account with the specified initial balance, transaction limits, and account type.
+     * 
+     * @param initBalance The initial balance of the account.
+     * @param maxWithdrawal The maximum withdrawal limit.
+     * @param maxDeposit The maximum deposit limit.
+     * @param accountType The type of account (CHECKING or SAVINGS).
+     */
+    public BankAccount(double initBalance, double maxWithdrawal, double maxDeposit, AccountType accountType) {
+        this.balance = initBalance;
+        this.maxWithdrawalLimit = maxWithdrawal;
+        this.maxDepositLimit = maxDeposit;
+        this.transactionHistory = new ArrayList<>();
+        this.accountType = accountType;
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -250,5 +302,14 @@ public class BankAccount {
     public void clearTransactionHistory() {
         transactionHistory.clear();
         recordTransaction(TransactionType.ADMIN, 0, "Transaction history cleared");
+    }
+
+    /**
+     * Returns the type of account.
+     * 
+     * @return The account type (CHECKING or SAVINGS).
+     */
+    public AccountType getAccountType() {
+        return this.accountType;
     }
 }
