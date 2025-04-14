@@ -1,6 +1,7 @@
 package bankingapp;
 import java.util.ArrayList;
 import java.util.HashMap;
+
 public class AccountHolder {
 
 	private String lastname;
@@ -9,9 +10,9 @@ public class AccountHolder {
 	
 	private int ssn;
 	
-	private int BankCode;
+	private int bankCode;
 	
-	private ArrayList<Integer> BankAccounts;
+	private ArrayList<Integer> bankAccounts;
 	
 	private String password; // Password to protect personal information
 	
@@ -21,8 +22,8 @@ public class AccountHolder {
 		this.lastname = null;
 		this.birthday = null;
 		this.ssn = 0;
-		this.BankAccounts = new ArrayList<Integer>();
-		this.BankCode = 0;
+		this.bankAccounts = new ArrayList<Integer>();
+		this.bankCode = 0;
 		this.password = null;
 		this.isPersonalInfoHidden = false;
 	}
@@ -39,8 +40,8 @@ public class AccountHolder {
 		this.lastname = lastname;
 		this.birthday = birthday;
 		this.ssn = ssn;
-		this.BankCode = bankCode;
-		this.BankAccounts = new ArrayList<Integer>();
+		this.bankCode = bankCode;
+		this.bankAccounts = new ArrayList<Integer>();
 		this.password = null;
 		this.isPersonalInfoHidden = false;
 	}
@@ -57,7 +58,7 @@ public class AccountHolder {
 		this.lastname = lastname;
 		this.birthday = birthday;
 		this.ssn = ssn;
-		this.BankCode = bankCode;
+		this.bankCode = bankCode;
 	}
 	
 	/**
@@ -83,11 +84,19 @@ public class AccountHolder {
 	 * @return true if password is correct and personal info is now visible, false otherwise
 	 */
 	public boolean showPersonalInfo(String inputPassword) {
-		if (this.password != null && this.password.equals(inputPassword)) {
+		// If no password is set, always show the info
+		if (this.password == null) {
 			this.isPersonalInfoHidden = false;
 			return true;
 		}
-		this.isPersonalInfoHidden = true; // Ensure info stays hidden with wrong password
+		
+		// If password matches, show the info
+		if (this.password.equals(inputPassword)) {
+			this.isPersonalInfoHidden = false;
+			return true;
+		}
+		
+		// If password doesn't match, keep the current hidden state
 		return false;
 	}
 	
@@ -98,57 +107,89 @@ public class AccountHolder {
 	 * @return A string containing personal information, or null if hidden and wrong password
 	 */
 	public String getPersonalInfo(String inputPassword) {
-		// Always require password if personal info is hidden
+		// If personal info is hidden, always require password
 		if (isPersonalInfoHidden) {
-			if (this.password != null && this.password.equals(inputPassword)) {
-				return "Last Name: " + lastname + "\n" +
-					   "Birthday: " + birthday + "\n" +
-					   "SSN: " + ssn + "\n" +
-					   "Bank Code: " + BankCode;
+			// If no password is set, don't allow access
+			if (password == null) {
+				return null;
 			}
+			// Only allow access if password matches
+			if (!password.equals(inputPassword)) {
+				return null;
+			}
+		}
+		
+		// If password is set, require it even if info is not hidden
+		if (password != null && !password.equals(inputPassword)) {
 			return null;
 		}
 		
-		// If not hidden, still require password if one is set
-		if (this.password != null) {
-			if (this.password.equals(inputPassword)) {
-				return "Last Name: " + lastname + "\n" +
-					   "Birthday: " + birthday + "\n" +
-					   "SSN: " + ssn + "\n" +
-					   "Bank Code: " + BankCode;
+		return formatPersonalInfo();
+	}
+	
+	/**
+	 * Checks if the provided password is valid
+	 * 
+	 * @param inputPassword The password to check
+	 * @return true if password is valid or not required, false otherwise
+	 */
+	private boolean isPasswordValid(String inputPassword) {
+		// If personal info is hidden, always require password
+		if (isPersonalInfoHidden) {
+			// If no password is set, don't allow access
+			if (password == null) {
+				return false;
 			}
-			return null;
+			// Only allow access if password matches
+			return password.equals(inputPassword);
 		}
 		
-		// Only return info without password if no password is set and info is not hidden
-		return "Last Name: " + lastname + "\n" +
-			   "Birthday: " + birthday + "\n" +
-			   "SSN: " + ssn + "\n" +
-			   "Bank Code: " + BankCode;
+		// If password is set, require it even if info is not hidden
+		if (password != null) {
+			return password.equals(inputPassword);
+		}
+		
+		// No password required if info is not hidden and no password is set
+		return true;
 	}
 	
-	public void addBankAccount(AccountHolder info, int BankAccountCode  ) {
-		if(!info.BankAccounts.contains(BankAccountCode)) {
-			info.BankAccounts.add(BankAccountCode);
+	/**
+	 * Formats the personal information into a readable string
+	 * 
+	 * @return Formatted string containing personal information
+	 */
+	private String formatPersonalInfo() {
+		StringBuilder info = new StringBuilder();
+		info.append("Last Name: ").append(lastname).append("\n");
+		info.append("Birthday: ").append(birthday).append("\n");
+		info.append("SSN: ").append(ssn).append("\n");
+		info.append("Bank Code: ").append(bankCode);
+		return info.toString();
+	}
+	
+	public void addBankAccount(AccountHolder info, int bankAccountNumber) {
+		if(!info.bankAccounts.contains(bankAccountNumber)) {
+			info.bankAccounts.add(bankAccountNumber);
 		}
 	}
 	
-	public void removeBankAccount(AccountHolder info, int BankAccountCode  ) {
-		if(info.BankAccounts.contains(BankAccountCode)) {
-			info.BankAccounts.remove(BankAccountCode);
+	public void removeBankAccount(AccountHolder info, int bankAccountNumber) {
+		int index = info.bankAccounts.indexOf(bankAccountNumber);
+		if(index != -1) {
+			info.bankAccounts.remove(index);
 		}
 	}
 	
 	public void listBankAccounts(AccountHolder info){
-		int i =1;
-		for(Integer list: info.BankAccounts) {
-			System.out.printf("Saving Account" + i, list);
+		int i = 1;
+		for(Integer accountNumber : info.bankAccounts) {
+			System.out.printf("Saving Account %d: %d%n", i, accountNumber);
 			i++;
 		}
 	}
 	
-	public boolean findBankAccount(AccountHolder info, int BankAccountCode) {
-		return info.BankAccounts.contains(BankAccountCode);
+	public boolean findBankAccount(AccountHolder info, int bankAccountNumber) {
+		return info.bankAccounts.contains(bankAccountNumber);
 	}
 	
 	public String getLastname() {
