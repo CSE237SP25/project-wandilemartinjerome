@@ -155,7 +155,14 @@ public class Menu {
 
         // Add account holder to the system
         accountDatabase.addAccountHolder(currentAccountHolder);
-
+        // Choose account category
+        System.out.println("\nSelect Account Category:");
+        System.out.println("1. Personal Account");
+        System.out.println("2. Business Account");
+        System.out.print("Select account category (1-2): ");
+        int accountCategoryChoice = getIntInput();
+        boolean isBusinessAccount = (accountCategoryChoice == 2);
+        
         // Choose account type
         System.out.println("\nSelect Account Type:");
         System.out.println("1. Checking");
@@ -165,18 +172,17 @@ public class Menu {
         AccountType accountType;
         while (true) {
             if (accountTypeChoice == 1) {
-            accountType = AccountType.CHECKING;
-            break;
+                accountType = AccountType.CHECKING;
+                break;
             } else if (accountTypeChoice == 2) {
-            accountType = AccountType.SAVINGS;
-            break;
+                accountType = AccountType.SAVINGS;
+                break;
             } else {
-            System.out.println("Invalid choice. Please enter 1 for Checking or 2 for Savings.");
-            System.out.print("Enter your choice (1-2): ");
-            accountTypeChoice = getIntInput();
+                System.out.println("Invalid choice. Please enter 1 for Checking or 2 for Savings.");
+                System.out.print("Enter your choice (1-2): ");
+                accountTypeChoice = getIntInput();
             }
         }
-
         System.out.print("\nEnter initial deposit amount (or 0 for empty account): ");
 
         try {
@@ -186,20 +192,27 @@ public class Menu {
                 System.out.println("Initial amount cannot be negative.");
                 return;
             }
-
-            if (initialAmount == 0) {
-                currentAccount = new BankAccount(accountType);
+            // Create appropriate account type based on user choice
+            if (isBusinessAccount) {
+                currentAccount = initialAmount == 0 ? 
+                    new BusinessAccount(accountType) : new BusinessAccount(initialAmount, accountType);
+                System.out.println("\nBusiness Account created successfully!");
             } else {
-                currentAccount = new BankAccount(initialAmount, accountType);
+                currentAccount = initialAmount == 0 ? 
+                    new BankAccount(accountType) : new BankAccount(initialAmount, accountType);
+                System.out.println("\nPersonal Account created successfully!");
             }
 
             accountDatabase.addBankAccount(currentAccount);
-            System.out.println("\nAccount created successfully!");
+            accountDatabase.addBankAccount(currentAccount);
             System.out.println("Account number: " + currentAccount.hashCode());
             System.out.println(accountType + " account created.");
             System.out.println("Current balance: $" + currentAccount.getCurrentBalance());
-
-            // Link the bank account to the account holder
+            
+            // Display account limits
+            System.out.println("Maximum withdrawal limit: $" + currentAccount.getMaxWithdrawalLimit());
+            System.out.println("Maximum deposit limit: $" + currentAccount.getMaxDepositLimit());
+            
             currentAccountHolder.addBankAccount(currentAccountHolder, currentAccount.hashCode());
 
             System.out.println("\nYour personal information has been saved.");
