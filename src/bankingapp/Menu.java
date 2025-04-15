@@ -132,54 +132,76 @@ public class Menu {
      */
     private void createAccount() {
         System.out.println("\n----- Create a New Account -----");
-        
+
         // Get account holder information
         System.out.println("\nPlease enter your personal information:");
         System.out.print("Last Name: ");
         String lastName = scanner.nextLine();
-        
+
         System.out.print("Birthday (MM/DD/YYYY): ");
         String birthday = scanner.nextLine();
-        
+
         System.out.print("Social Security Number (SSN): ");
         int ssn = getIntInput();
-        
+
         System.out.print("Bank Code: ");
         int bankCode = getIntInput();
-        
+
         // Create new account holder with personal information
         currentAccountHolder = new AccountHolder();
         currentAccountHolder.setPersonalInfo(lastName, birthday, ssn, bankCode);
         currentAccountHolder.setPassword("default123"); // Set a default password
         currentAccountHolder.hidePersonalInfo(); // Hide personal info by default
-        
+
         // Add account holder to the system
         accountDatabase.addAccountHolder(currentAccountHolder);
-        
+
+        // Choose account type
+        System.out.println("\nSelect Account Type:");
+        System.out.println("1. Checking");
+        System.out.println("2. Savings");
+        System.out.print("Enter your choice (1-2): ");
+        int accountTypeChoice = getIntInput();
+        AccountType accountType;
+        while (true) {
+            if (accountTypeChoice == 1) {
+            accountType = AccountType.CHECKING;
+            break;
+            } else if (accountTypeChoice == 2) {
+            accountType = AccountType.SAVINGS;
+            break;
+            } else {
+            System.out.println("Invalid choice. Please enter 1 for Checking or 2 for Savings.");
+            System.out.print("Enter your choice (1-2): ");
+            accountTypeChoice = getIntInput();
+            }
+        }
+
         System.out.print("\nEnter initial deposit amount (or 0 for empty account): ");
-        
+
         try {
             double initialAmount = Double.parseDouble(scanner.nextLine());
-            
+
             if (initialAmount < 0) {
                 System.out.println("Initial amount cannot be negative.");
                 return;
             }
-            
+
             if (initialAmount == 0) {
-                currentAccount = new BankAccount();
+                currentAccount = new BankAccount(accountType);
             } else {
-                currentAccount = new BankAccount(initialAmount);
+                currentAccount = new BankAccount(initialAmount, accountType);
             }
-            
+
             accountDatabase.addBankAccount(currentAccount);
             System.out.println("\nAccount created successfully!");
             System.out.println("Account number: " + currentAccount.hashCode());
+            System.out.println(accountType + " account created.");
             System.out.println("Current balance: $" + currentAccount.getCurrentBalance());
-            
+
             // Link the bank account to the account holder
             currentAccountHolder.addBankAccount(currentAccountHolder, currentAccount.hashCode());
-            
+
             System.out.println("\nYour personal information has been saved.");
             System.out.println("Default password is: default123");
             System.out.println("Please change your password for security.");

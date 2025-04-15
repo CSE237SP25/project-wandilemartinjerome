@@ -9,6 +9,7 @@ import static org.junit.Assert.assertThrows;
 import org.junit.Test;
 
 import bankingapp.BankAccount;
+import bankingapp.AccountType;
 
 public class BankAccountTests {
     
@@ -212,5 +213,46 @@ public class BankAccountTests {
             sourceAccount.transfer(destinationAccount, 1500.0));
         assertEquals(2000.0, sourceAccount.getCurrentBalance(), 0.005);
         assertEquals(500.0, destinationAccount.getCurrentBalance(), 0.005);
+    }
+
+    // Tests for AccountType functionality
+    @Test
+    public void testCreateCheckingAccount() {
+        BankAccount account = new BankAccount(AccountType.CHECKING);
+        assertEquals(AccountType.CHECKING, account.getAccountType());
+        assertEquals(0.0, account.getCurrentBalance(), 0.001);
+    }
+
+    @Test
+    public void testCreateSavingsAccount() {
+        BankAccount account = new BankAccount(AccountType.SAVINGS);
+        assertEquals(AccountType.SAVINGS, account.getAccountType());
+        assertEquals(0.0, account.getCurrentBalance(), 0.001);
+    }
+
+    @Test
+    public void testCreateAccountWithBalanceAndType() {
+        BankAccount checkingAccount = new BankAccount(100.0, AccountType.CHECKING);
+        assertEquals(AccountType.CHECKING, checkingAccount.getAccountType());
+        assertEquals(100.0, checkingAccount.getCurrentBalance(), 0.001);
+
+        BankAccount savingsAccount = new BankAccount(250.0, AccountType.SAVINGS);
+        assertEquals(AccountType.SAVINGS, savingsAccount.getAccountType());
+        assertEquals(250.0, savingsAccount.getCurrentBalance(), 0.001);
+    }
+
+    @Test
+    public void testCreateAccountWithBalanceAndLimitsAndType() {
+        BankAccount checkingAccount = new BankAccount(100.0, 2000.0, 15000.0, AccountType.CHECKING);
+        assertEquals(AccountType.CHECKING, checkingAccount.getAccountType());
+        assertEquals(100.0, checkingAccount.getCurrentBalance(), 0.001);
+        assertEquals(2000.0, checkingAccount.getMaxWithdrawalLimit(), 0.001);
+        assertEquals(15000.0, checkingAccount.getMaxDepositLimit(), 0.001);
+
+        BankAccount savingsAccount = new BankAccount(250.0, 3000.0, 20000.0, AccountType.SAVINGS);
+        assertEquals(AccountType.SAVINGS, savingsAccount.getAccountType());
+        assertEquals(250.0, savingsAccount.getCurrentBalance(), 0.001);
+        assertEquals(3000.0, savingsAccount.getMaxWithdrawalLimit(), 0.001);
+        assertEquals(20000.0, savingsAccount.getMaxDepositLimit(), 0.001);
     }
 }

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.junit.After;
@@ -17,7 +18,9 @@ public class MenuTests {
     
     private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
-    
+    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private final InputStream originalIn = System.in;
+
     @Before
     public void setUpStreams() {
         System.setOut(new PrintStream(outputStream));
@@ -81,5 +84,38 @@ public class MenuTests {
         
         String output = outputStream.toString();
         assertTrue("Output should show insufficient funds message", output.contains("Insufficient funds"));
+    }
+
+    @Test
+    public void testAccountTypeSelection() {
+        // Format: 1 (create account) -> last name -> birthday -> SSN -> bank code -> account type (1=checking) -> initial amount -> 11 (exit)
+        String checkingInput = "1\nSmith\n01/01/1990\n123456789\n101\n1\n500\n11\n";
+        System.setIn(new ByteArrayInputStream(checkingInput.getBytes()));
+
+        Menu menu = new Menu();
+        menu.showMainMenu();
+
+        String output = outputStream.toString();
+        assertTrue("Should create checking account successfully", output.contains("CHECKING account created"));
+        
+        System.setOut(originalOut);
+        System.setIn(originalIn);
+        
+        // Set up new streams for savings account test
+        ByteArrayOutputStream savingsOutputStream = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(savingsOutputStream));
+        
+        // Simulate user input for creating a savings account
+        // Format: 1 (create account) -> last name -> birthday -> SSN -> bank code -> account type (2=savings) -> initial amount -> 11 (exit)
+        String savingsInput = "1\nJohnson\n02/02/1995\n987654321\n202\n2\n1000\n11\n";
+        System.setIn(new ByteArrayInputStream(savingsInput.getBytes()));
+        
+        // Create and run the menu again
+        Menu menu2 = new Menu();
+        menu2.showMainMenu();
+        
+        // Check output contains savings account creation confirmation
+        String savingsOutput = savingsOutputStream.toString();
+        assertTrue("Should create savings account successfully", savingsOutput.contains( "SAVINGS account created"));
     }
 }
