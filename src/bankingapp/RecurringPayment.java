@@ -100,12 +100,17 @@ public class RecurringPayment {
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
+        System.out.println("[DEBUG updateNextPaymentDate] Initial cal: " + cal.getTime());
         
         // Get current date for comparison
         Calendar now = getCurrentCalendar();
+        System.out.println("[DEBUG updateNextPaymentDate] Current 'now': " + now.getTime());
         
         // Keep adding the frequency until we find a date in the future
+        int loopCount = 0;
         do {
+            loopCount++;
+            System.out.println("[DEBUG updateNextPaymentDate] Loop " + loopCount + " START - Current cal: " + cal.getTime());
             // Add appropriate time interval
             switch (frequency) {
                 case DAILY:
@@ -121,9 +126,12 @@ public class RecurringPayment {
                     cal.add(Calendar.YEAR, 1);
                     break;
             }
+            System.out.println("[DEBUG updateNextPaymentDate] Loop " + loopCount + " END - New cal: " + cal.getTime());
         } while (cal.getTimeInMillis() <= now.getTimeInMillis());
+        System.out.println("[DEBUG updateNextPaymentDate] Loop finished after " + loopCount + " iterations.");
         
         nextPaymentDate = cal.getTime();
+        System.out.println("[DEBUG updateNextPaymentDate] Final nextPaymentDate: " + nextPaymentDate);
     }
 
     // Removed redundant processPayment method - logic is in BankAccount.processRecurringPayments()
