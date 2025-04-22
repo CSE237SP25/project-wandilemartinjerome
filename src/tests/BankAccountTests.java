@@ -104,7 +104,9 @@ public class BankAccountTests {
         boolean result = account.withdraw(50.0);
         assertFalse("Withdrawal should fail due to insufficient funds", result);
         assertEquals(25.0, account.getCurrentBalance(), 0.01);
-        assertEquals(1, account.getTransactionHistory().size()); // Only the initial deposit transaction
+        assertEquals(2, account.getTransactionHistory().size()); // Only the initial deposit transaction
+        assertEquals(TransactionType.DEPOSIT, account.getTransactionHistory().get(0).getType());
+        assertEquals(TransactionType.FAILED, account.getTransactionHistory().get(1).getType());
     }
 
     // Tests for transfer functionality
@@ -122,8 +124,12 @@ public class BankAccountTests {
     public void testInsufficientFundsTransfer() {
         BankAccount sourceAccount = new BankAccount(20.0);
         BankAccount destinationAccount = new BankAccount(50.0);
-        assertThrows(IllegalArgumentException.class, () -> 
-            sourceAccount.transfer(destinationAccount, 25.0));
+        
+        // Changed from expecting exception to checking boolean result
+        boolean result = sourceAccount.transfer(destinationAccount, 25.0);
+        assertFalse("Transfer should fail due to insufficient funds", result);
+        
+        // Verify balances remain unchanged
         assertEquals(20.0, sourceAccount.getCurrentBalance(), 0.005);
         assertEquals(50.0, destinationAccount.getCurrentBalance(), 0.005);
     }
