@@ -279,7 +279,7 @@ public class BankAccount {
         }
         
         RecurringPayment payment = new RecurringPayment(amount, description, startDate, 
-                                                       frequency, recipientAccountId);
+                                                       frequency, recipientAccountId, this);
         recurringPayments.add(payment);
         return payment;
     }
@@ -292,24 +292,25 @@ public class BankAccount {
     public int processRecurringPayments() {
         int processed = 0;
         for (RecurringPayment payment : recurringPayments) {
-            while (payment.isPaymentDue()) {
+            if (payment.isPaymentDue()) {
                 try {
-                    if (balance >= payment.getAmount()) {
-                        balance -= payment.getAmount();
+                    double amount = payment.getAmount();
+                    if (balance >= amount) {
+                        balance -= amount;
                         recordTransaction(TransactionType.RECURRING_PAYMENT, 
-                                       payment.getAmount(),
+                                       amount,
                                        "Recurring payment: " + payment.getDescription());
                         payment.updateNextPaymentDate();
                         processed++;
                     } else {
-                        recordTransaction(TransactionType.FAILED, payment.getAmount(),
-                                       "Failed recurring payment: Insufficient funds");
-                        break;
+                        recordTransaction(TransactionType.FAILED, amount,
+                                       "Failed recurring payment '" + payment.getDescription() + "': Insufficient funds");
+                        // Do NOT update next payment date when payment fails due to insufficient funds
                     }
                 } catch (Exception e) {
                     recordTransaction(TransactionType.FAILED, payment.getAmount(),
-                                   "Failed recurring payment: " + e.getMessage());
-                    break;
+                                   "Failed recurring payment '" + payment.getDescription() + "': " + e.getMessage());
+                    // Do NOT update next payment date when payment fails due to error
                 }
             }
         }
