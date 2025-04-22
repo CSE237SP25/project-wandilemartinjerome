@@ -15,7 +15,7 @@ public class RecurringPayment {
     private PaymentFrequency frequency;
     private String recipientAccountId;
     private boolean isActive;
-    private BankAccount account;
+    private BankAccount bankAccount;
 
     public enum PaymentFrequency {
         DAILY,
@@ -25,7 +25,7 @@ public class RecurringPayment {
     }
 
     public RecurringPayment(double amount, String description, Date startDate, 
-                           PaymentFrequency frequency, String recipientAccountId, BankAccount account) {
+                           PaymentFrequency frequency, String recipientAccountId, BankAccount bankAccount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Payment amount must be positive");
         }
@@ -43,7 +43,7 @@ public class RecurringPayment {
         this.description = description;
         this.frequency = frequency;
         this.recipientAccountId = recipientAccountId;
-        this.account = account;
+        this.bankAccount = bankAccount;
         this.isActive = true;
         
         // Set start and next payment dates to midnight
@@ -57,42 +57,23 @@ public class RecurringPayment {
         this.nextPaymentDate = cal.getTime();
     }
 
-    private Calendar getCurrentCalendar() {
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
-        String testTime = System.getProperty("test.current.time");
-        if (testTime != null) {
-            try {
-                cal.setTimeInMillis(Long.parseLong(testTime));
-            } catch (NumberFormatException e) {
-                // Ignore and use current time
-            }
-        }
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal;
-    }
-
-    public boolean isPaymentDue() {
+    // Checks if the payment is due based on the provided current time
+    public boolean isPaymentDue(Calendar currentTime) { 
         if (!isActive) return false;
-        
-        // Get current date at midnight
-        Calendar now = getCurrentCalendar();
-        
-        // Get next payment date at midnight
         Calendar next = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
         next.setTime(nextPaymentDate);
+        // Ensure 'next' is also set to midnight for comparison
         next.set(Calendar.HOUR_OF_DAY, 0);
         next.set(Calendar.MINUTE, 0);
         next.set(Calendar.SECOND, 0);
         next.set(Calendar.MILLISECOND, 0);
-        
-        // Compare dates at midnight - include the current day (>=)
-        return now.getTimeInMillis() >= next.getTimeInMillis();
+
+        // Compare provided currentTime (already at midnight) with next payment date (at midnight)
+        return currentTime.getTimeInMillis() >= next.getTimeInMillis();
     }
 
-    public void updateNextPaymentDate() {
+    // Updates the next payment date based on the frequency, relative to the provided current time 'now'
+    public void updateNextPaymentDate(Calendar now) { 
         // Start with current next payment date
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
         cal.setTime(nextPaymentDate);
@@ -100,17 +81,10 @@ public class RecurringPayment {
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
-        System.out.println("[DEBUG updateNextPaymentDate] Initial cal: " + cal.getTime());
-        
-        // Get current date for comparison
-        Calendar now = getCurrentCalendar();
-        System.out.println("[DEBUG updateNextPaymentDate] Current 'now': " + now.getTime());
-        
-        // Keep adding the frequency until we find a date in the future
-        int loopCount = 0;
+
+        // Keep adding the frequency until we find a date strictly *after* 'now'
+        // Use <= to ensure if payment is due exactly today, we still advance it
         do {
-            loopCount++;
-            System.out.println("[DEBUG updateNextPaymentDate] Loop " + loopCount + " START - Current cal: " + cal.getTime());
             // Add appropriate time interval
             switch (frequency) {
                 case DAILY:
@@ -126,34 +100,10 @@ public class RecurringPayment {
                     cal.add(Calendar.YEAR, 1);
                     break;
             }
-            System.out.println("[DEBUG updateNextPaymentDate] Loop " + loopCount + " END - New cal: " + cal.getTime());
-        } while (cal.getTimeInMillis() <= now.getTimeInMillis());
-        System.out.println("[DEBUG updateNextPaymentDate] Loop finished after " + loopCount + " iterations.");
+        } while (cal.getTimeInMillis() <= now.getTimeInMillis()); 
         
         nextPaymentDate = cal.getTime();
-        System.out.println("[DEBUG updateNextPaymentDate] Final nextPaymentDate: " + nextPaymentDate);
     }
-
-    // Removed redundant processPayment method - logic is in BankAccount.processRecurringPayments()
-    /*
-    public int processPayment() {
-        if (!isPaymentDue()) {
-            System.out.println("[DEBUG] Payment not due - next payment date: " + nextPaymentDate);
-            return 0;
-        }
-        try {
-            // No getAccountNumber() exists in BankAccount
-            // System.out.println("[DEBUG] Attempting payment of " + amount + " from account " + account.getAccountNumber()); 
-            System.out.println("[DEBUG] Attempting payment of " + amount);
-            account.withdraw(amount); // Correct withdraw signature
-            updateNextPaymentDate();
-            return 1;
-        } catch (InsufficientFundsException e) {
-            System.out.println("[DEBUG] Insufficient funds for payment: " + e.getMessage());
-            return 0;
-        }
-    }
-    */
 
     // Getters
     public double getAmount() { return amount; }
@@ -163,7 +113,7 @@ public class RecurringPayment {
     public PaymentFrequency getFrequency() { return frequency; }
     public String getRecipientAccountId() { return recipientAccountId; }
     public boolean isActive() { return isActive; }
-    public BankAccount getAccount() { return account; }
+    public BankAccount getBankAccount() { return bankAccount; }
 
     // Setters
     public void setAmount(double amount) { this.amount = amount; }

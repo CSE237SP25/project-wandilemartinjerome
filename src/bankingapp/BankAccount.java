@@ -1,8 +1,11 @@
 package bankingapp;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * Represents a bank account with basic operations.
@@ -284,54 +287,72 @@ public class BankAccount {
         return payment;
     }
 
-    /**
-     * Processes all due recurring payments.
-     * 
-     * @return The number of payments processed.
-     */
+    // Utility method to get the current Calendar instance for tests or real time
+    private Calendar getCurrentCalendar() {
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT-5")); // Use GMT-5
+        String testTime = System.getProperty("test.current.time");
+        if (testTime != null && !testTime.trim().isEmpty()) {
+            try {
+                cal.setTimeInMillis(Long.parseLong(testTime));
+            } catch (NumberFormatException e) {
+                System.err.println("[BankAccount] WARN: Could not parse test time property '" + testTime + "'. Using real time.");
+                // Fall through to use real time
+            }
+        } // Otherwise, use real time by default
+
+        // Set to midnight for consistent date comparisons
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal;
+    }
+
+    public void cancelRecurringPayment(RecurringPayment payment) {
+        if (recurringPayments.contains(payment)) {
+            payment.setActive(false);
+        } else {
+            System.out.println("Payment not found in scheduled list.");
+        }
+    }
+
+    public List<RecurringPayment> getRecurringPayments() {
+        return new ArrayList<>(recurringPayments); // Return a copy
+    }
+
+    // Processes all active recurring payments that are due
     public int processRecurringPayments() {
-        int processed = 0;
-        for (RecurringPayment payment : recurringPayments) {
-            if (payment.isPaymentDue()) {
+        int paymentsProcessed = 0;
+        // Get the current time (respecting test property) ONCE for this processing run
+        Calendar now = getCurrentCalendar(); 
+        System.out.println("[ProcessRecurringPayments] Processing with 'now' = " + now.getTime()); // Optional: Debugging
+
+        // Iterate using an iterator to allow removal during iteration if needed (though not strictly necessary here as we only deactivate)
+        Iterator<RecurringPayment> iterator = recurringPayments.iterator();
+        while (iterator.hasNext()) {
+            RecurringPayment payment = iterator.next();
+            System.out.println("[ProcessRecurringPayments] Checking payment: " + payment.getDescription() + ", Active: " + payment.isActive()); // Optional: Debugging
+
+            // Pass 'now' to isPaymentDue
+            if (payment.isActive() && payment.isPaymentDue(now)) { 
+                System.out.println("[ProcessRecurringPayments] Payment DUE: " + payment.getDescription() + ", Amount: " + payment.getAmount()); // Optional: Debugging
                 try {
-                    double amount = payment.getAmount();
-                    if (balance >= amount) {
-                        balance -= amount;
-                        recordTransaction(TransactionType.RECURRING_PAYMENT, 
-                                       amount,
-                                       "Recurring payment: " + payment.getDescription());
-                        payment.updateNextPaymentDate();
-                        processed++;
-                    } else {
-                        recordTransaction(TransactionType.FAILED, amount,
-                                       "Failed recurring payment '" + payment.getDescription() + "': Insufficient funds");
-                        // Do NOT update next payment date when payment fails due to insufficient funds
-                    }
-                } catch (Exception e) {
-                    recordTransaction(TransactionType.FAILED, payment.getAmount(),
-                                   "Failed recurring payment '" + payment.getDescription() + "': " + e.getMessage());
-                    // Do NOT update next payment date when payment fails due to error
+                    withdraw(payment.getAmount()); // Use BankAccount's withdraw
+                    System.out.println("[ProcessRecurringPayments] Payment SUCCESS: " + payment.getDescription()); // Optional: Debugging
+                    // Pass 'now' to updateNextPaymentDate
+                    payment.updateNextPaymentDate(now); 
+                    System.out.println("[ProcessRecurringPayments] Updated next payment date for " + payment.getDescription() + " to: " + payment.getNextPaymentDate()); // Optional: Debugging
+                    paymentsProcessed++;
+                } catch (IllegalArgumentException e) {
+                    // Log the error but continue processing others
+                    System.err.println("Insufficient funds for recurring payment '" + payment.getDescription() + "': " + e.getMessage());
+                    // Optionally, deactivate the payment after failed attempt?
+                    // payment.setActive(false); 
+                } catch (Exception e) { // Catch other potential exceptions during withdrawal
+                    System.err.println("Error processing recurring payment '" + payment.getDescription() + "': " + e.getMessage());
                 }
             }
         }
-        return processed;
-    }
-
-    /**
-     * Gets all recurring payments for this account.
-     * 
-     * @return List of recurring payments.
-     */
-    public List<RecurringPayment> getRecurringPayments() {
-        return new ArrayList<>(recurringPayments);
-    }
-
-    /**
-     * Cancels a recurring payment.
-     * 
-     * @param payment The recurring payment to cancel.
-     */
-    public void cancelRecurringPayment(RecurringPayment payment) {
-        payment.setActive(false);
+        return paymentsProcessed;
     }
 }

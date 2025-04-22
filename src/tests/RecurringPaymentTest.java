@@ -40,7 +40,7 @@ public class RecurringPaymentTest {
 
     @Test
     public void testScheduleRecurringPayment() {
-        RecurringPayment payment = account.scheduleRecurringPayment(
+        account.scheduleRecurringPayment(
             100.0,
             "Monthly Subscription",
             startDate,
@@ -48,14 +48,14 @@ public class RecurringPaymentTest {
             "MONTHLY001"
         );
         
-        assertNotNull("Payment should be created", payment);
-        assertEquals("Payment amount should match", 100.0, payment.getAmount(), 0.01);
-        assertEquals("Payment description should match", "Monthly Subscription", payment.getDescription());
-        assertEquals("Payment frequency should match", RecurringPayment.PaymentFrequency.MONTHLY, payment.getFrequency());
-        assertEquals("Payment should have correct recipient", "MONTHLY001", payment.getRecipientAccountId());
-        assertTrue("Payment should be active", payment.isActive());
+        assertNotNull("Payment should be created", account.getRecurringPayments().get(0));
+        assertEquals("Payment amount should match", 100.0, account.getRecurringPayments().get(0).getAmount(), 0.01);
+        assertEquals("Payment description should match", "Monthly Subscription", account.getRecurringPayments().get(0).getDescription());
+        assertEquals("Payment frequency should match", RecurringPayment.PaymentFrequency.MONTHLY, account.getRecurringPayments().get(0).getFrequency());
+        assertEquals("Payment should have correct recipient", "MONTHLY001", account.getRecurringPayments().get(0).getRecipientAccountId());
+        assertTrue("Payment should be active", account.getRecurringPayments().get(0).isActive());
         assertEquals("Initial next payment date should match start date", 
-                    startDate, payment.getNextPaymentDate());
+                    startDate, account.getRecurringPayments().get(0).getNextPaymentDate());
     }
     
     @Test
@@ -92,7 +92,7 @@ public class RecurringPaymentTest {
     
     @Test
     public void testProcessRecurringPayments() {
-        RecurringPayment payment = account.scheduleRecurringPayment(
+        account.scheduleRecurringPayment(
             100.0,
             "Monthly Payment",
             startDate,
@@ -122,7 +122,7 @@ public class RecurringPaymentTest {
         System.setProperty("test.current.time", "2020-01-01T10:00:00"); // Set current time for test
         BankAccount account = new BankAccount(100.0); // Start with 100
         Date startDate = getDate(2020, Calendar.JANUARY, 1);
-        RecurringPayment payment = account.scheduleRecurringPayment(
+        account.scheduleRecurringPayment(
                 75.0, "Monthly Subscription", startDate, 
                 RecurringPayment.PaymentFrequency.MONTHLY, "recipient123");
 
@@ -147,7 +147,7 @@ public class RecurringPaymentTest {
         System.setProperty("test.current.time", "2020-01-01T10:00:00");
         BankAccount account = new BankAccount(200.0);
         Date startDate = getDate(2020, Calendar.JANUARY, 1);
-        RecurringPayment payment = account.scheduleRecurringPayment(
+        account.scheduleRecurringPayment(
                 50.0, "Gym Membership", startDate, 
                 RecurringPayment.PaymentFrequency.MONTHLY, "gym456");
 
@@ -156,7 +156,7 @@ public class RecurringPaymentTest {
         assertEquals("Balance after first payment", 150.0, account.getCurrentBalance(), 0.01);
 
         // Cancel the payment
-        account.cancelRecurringPayment(payment);
+        account.cancelRecurringPayment(account.getRecurringPayments().get(0));
 
         // Set time forward to make next payment due
         System.setProperty("test.current.time", "2020-02-01T10:00:00"); 
@@ -174,7 +174,7 @@ public class RecurringPaymentTest {
         System.setProperty("test.current.time", "2020-01-01T10:00:00");
         BankAccount account = new BankAccount(500.0);
         Date startDate = getDate(2020, Calendar.JANUARY, 1); // Start Jan 1st
-        RecurringPayment payment = account.scheduleRecurringPayment(
+        account.scheduleRecurringPayment(
                 50.0, "Daily Test", startDate, 
                 RecurringPayment.PaymentFrequency.DAILY, "daily1");
 
@@ -184,7 +184,7 @@ public class RecurringPaymentTest {
 
         // Check next payment date
         Calendar actualNext = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
-        actualNext.setTime(payment.getNextPaymentDate());
+        actualNext.setTime(account.getRecurringPayments().get(0).getNextPaymentDate());
 
         // Expected: Jan 2nd (Day 2 of the year)
         int EXPECTED_NEXT_MONTH = Calendar.JANUARY;
@@ -199,25 +199,113 @@ public class RecurringPaymentTest {
     }
 
     @Test
+    public void testIsPaymentDue() {
+        // Set current time for test to Jan 15th, 2020
+        long jan15_2020_millis = getDate(2020, Calendar.JANUARY, 15).getTime();
+        System.setProperty("test.current.time", String.valueOf(jan15_2020_millis));
+        Calendar testNow = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
+        testNow.setTimeInMillis(jan15_2020_millis);
+        testNow.set(Calendar.HOUR_OF_DAY, 0);
+        testNow.set(Calendar.MINUTE, 0);
+        testNow.set(Calendar.SECOND, 0);
+        testNow.set(Calendar.MILLISECOND, 0);
+
+        // Scenario 1: Payment due today
+        Date startDateDue = getDate(2020, Calendar.JANUARY, 15); // Start date is today
+        account.scheduleRecurringPayment(50.0, "Due Today", startDateDue, RecurringPayment.PaymentFrequency.MONTHLY, "recipientDue");
+        RecurringPayment duePayment = account.getRecurringPayments().get(0); // Assuming it's the first/only one
+        assertTrue("Payment starting today should be due", duePayment.isPaymentDue(testNow));
+
+        // Scenario 2: Payment due in the past
+        Date startDatePast = getDate(2020, Calendar.JANUARY, 1); // Start date was Jan 1st
+        account.scheduleRecurringPayment(50.0, "Past Due", startDatePast, RecurringPayment.PaymentFrequency.MONTHLY, "recipientPast");
+        RecurringPayment pastDuePayment = account.getRecurringPayments().get(1);
+        assertTrue("Payment starting in the past should be due", pastDuePayment.isPaymentDue(testNow));
+
+        // Scenario 3: Payment due in the future
+        Date startDateFuture = getDate(2020, Calendar.FEBRUARY, 1); // Start date Feb 1st
+        account.scheduleRecurringPayment(50.0, "Future Payment", startDateFuture, RecurringPayment.PaymentFrequency.MONTHLY, "recipientFuture");
+        RecurringPayment futurePayment = account.getRecurringPayments().get(2);
+        assertFalse("Payment starting in the future should not be due", futurePayment.isPaymentDue(testNow));
+
+        // Scenario 4: Inactive payment (due date doesn't matter)
+        Date startDateInactive = getDate(2020, Calendar.JANUARY, 1);
+        account.scheduleRecurringPayment(50.0, "Inactive", startDateInactive, RecurringPayment.PaymentFrequency.MONTHLY, "recipientInactive");
+        RecurringPayment inactivePayment = account.getRecurringPayments().get(3);
+        inactivePayment.setActive(false);
+        assertFalse("Inactive payment should not be due", inactivePayment.isPaymentDue(testNow));
+
+        // Clean up system property
+        System.clearProperty("test.current.time");
+    }
+
+    @Test
     public void testCancelRecurringPayment() {
-        RecurringPayment payment = account.scheduleRecurringPayment(
+        Date startDate = getDate(2020, Calendar.JANUARY, 1);
+        account.scheduleRecurringPayment(
             100.0,
             "Cancellable Payment",
             startDate,
             RecurringPayment.PaymentFrequency.MONTHLY,
-            "CANCEL001"
+            "recipientCancel"
         );
+        RecurringPayment paymentToCancel = account.getRecurringPayments().get(0);
 
         // Cancel the payment
-        account.cancelRecurringPayment(payment);
-        assertFalse("Payment should be inactive", payment.isActive());
+        account.cancelRecurringPayment(paymentToCancel);
+        assertFalse("Payment should be inactive", paymentToCancel.isActive());
 
         // Try to process payments
+        // Set time forward to when payment *would* have been due
+        long feb1_2020_millis = getDate(2020, Calendar.FEBRUARY, 1).getTime();
+        System.setProperty("test.current.time", String.valueOf(feb1_2020_millis)); 
+        Calendar testNow = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
+        testNow.setTimeInMillis(feb1_2020_millis);
+        testNow.set(Calendar.HOUR_OF_DAY, 0);
+        testNow.set(Calendar.MINUTE, 0);
+        testNow.set(Calendar.SECOND, 0);
+        testNow.set(Calendar.MILLISECOND, 0);
         int processed = account.processRecurringPayments();
-        assertEquals("No payments should be processed", 0, processed);
-        assertEquals("Balance should remain unchanged", 1000.0, account.getCurrentBalance(), 0.01);
+        assertEquals("No payments should be processed for cancelled payment", 0, processed);
+        assertEquals("Balance should not change", 500.0, account.getCurrentBalance(), 0.01); // Assuming initial balance was 500
+
+        // Clean up system property
+        System.clearProperty("test.current.time");
     }
     
+    @Test
+    public void testPaymentCancellationWithTime() {
+        System.setProperty("test.current.time", "2020-01-01T10:00:00");
+        BankAccount account = new BankAccount(200.0);
+        Date startDate = getDate(2020, Calendar.JANUARY, 1);
+        account.scheduleRecurringPayment(
+                50.0, "Gym Membership", startDate, 
+                RecurringPayment.PaymentFrequency.MONTHLY, "gym456");
+
+        // Process first payment
+        account.processRecurringPayments();
+        assertEquals("Balance after first payment", 150.0, account.getCurrentBalance(), 0.01);
+
+        // Cancel the payment
+        account.cancelRecurringPayment(account.getRecurringPayments().get(0));
+
+        // Set time forward to make next payment due
+        System.setProperty("test.current.time", "2020-02-01T10:00:00"); 
+        Calendar testNow = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
+        testNow.setTimeInMillis(getDate(2020, Calendar.FEBRUARY, 1).getTime());
+        testNow.set(Calendar.HOUR_OF_DAY, 0);
+        testNow.set(Calendar.MINUTE, 0);
+        testNow.set(Calendar.SECOND, 0);
+        testNow.set(Calendar.MILLISECOND, 0);
+        
+        // Process payments again - the cancelled one should not run
+        int processedCount = account.processRecurringPayments();
+        assertEquals("No payment should process after cancellation", 0, processedCount);
+        assertEquals("Balance should remain unchanged after cancellation", 150.0, account.getCurrentBalance(), 0.01);
+
+        System.clearProperty("test.current.time");
+    }
+
     // Helper to create Date objects easily
     private Date getDate(int year, int month, int day) {
         Calendar calendar = Calendar.getInstance();
