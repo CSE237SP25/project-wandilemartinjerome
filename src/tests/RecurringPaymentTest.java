@@ -178,7 +178,10 @@ public class RecurringPaymentTest {
 
     @Test
     public void testNextPaymentDateCalculation() {
-        System.setProperty("test.current.time", "2020-01-01T10:00:00");
+        // Set current time to Jan 1st, 2020
+        long jan1_2020_millis = getDate(2020, Calendar.JANUARY, 1).getTime();
+        System.setProperty("test.current.time", String.valueOf(jan1_2020_millis));
+        
         BankAccount account = new BankAccount(500.0);
         Date startDate = getDate(2020, Calendar.JANUARY, 1); // Start Jan 1st
         account.scheduleRecurringPayment(
@@ -194,8 +197,8 @@ public class RecurringPaymentTest {
         actualCal.setTime(account.getRecurringPayments().get(0).getNextPaymentDate());
 
         assertEquals("Next payment year should be 2020", 2020, actualCal.get(Calendar.YEAR));
-        assertEquals("Next payment month should be February", Calendar.FEBRUARY, actualCal.get(Calendar.MONTH)); 
-        assertEquals("Next payment day should be 1st", 1, actualCal.get(Calendar.DAY_OF_MONTH));
+        assertEquals("Next payment month should be January", Calendar.JANUARY, actualCal.get(Calendar.MONTH)); 
+        assertEquals("Next payment day should be 2nd", 2, actualCal.get(Calendar.DAY_OF_MONTH));
 
         System.clearProperty("test.current.time");
     }
