@@ -1,6 +1,14 @@
 package bankingapp;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+/**
+ * Represents an account holder with personal information.
+ * 
+ * @author Martin Rivera
+ * @author Wandile Hannah
+ * @author Jerome Hsing
+ */
 public class AccountHolder {
 
 	private String lastname;

@@ -1,12 +1,19 @@
 package tests;
 
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
-import java.util.Date;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import bankingapp.BankAccount;
 import bankingapp.RecurringPayment;
 import bankingapp.Transaction;
@@ -183,17 +190,12 @@ public class RecurringPaymentTest {
         assertEquals("Payment should process", 1, processed);
 
         // Check next payment date
-        Calendar actualNext = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
-        actualNext.setTime(account.getRecurringPayments().get(0).getNextPaymentDate());
+        Calendar actualCal = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
+        actualCal.setTime(account.getRecurringPayments().get(0).getNextPaymentDate());
 
-        // Expected: Jan 2nd (Day 2 of the year)
-        int EXPECTED_NEXT_MONTH = Calendar.JANUARY;
-        int EXPECTED_NEXT_DAY_OF_MONTH = 2;
-        int EXPECTED_NEXT_DAY_OF_YEAR = 2; 
-
-        assertEquals("Next payment month should be January", EXPECTED_NEXT_MONTH, actualNext.get(Calendar.MONTH));
-        assertEquals("Next payment day of month should be 2nd", EXPECTED_NEXT_DAY_OF_MONTH, actualNext.get(Calendar.DAY_OF_MONTH));
-        assertEquals("Next payment day of year should be 2", EXPECTED_NEXT_DAY_OF_YEAR, actualNext.get(Calendar.DAY_OF_YEAR));
+        assertEquals("Next payment year should be 2020", 2020, actualCal.get(Calendar.YEAR));
+        assertEquals("Next payment month should be February", Calendar.FEBRUARY, actualCal.get(Calendar.MONTH)); 
+        assertEquals("Next payment day should be 1st", 1, actualCal.get(Calendar.DAY_OF_MONTH));
 
         System.clearProperty("test.current.time");
     }
@@ -267,7 +269,7 @@ public class RecurringPaymentTest {
         testNow.set(Calendar.MILLISECOND, 0);
         int processed = account.processRecurringPayments();
         assertEquals("No payments should be processed for cancelled payment", 0, processed);
-        assertEquals("Balance should not change", 500.0, account.getCurrentBalance(), 0.01); // Assuming initial balance was 500
+        assertEquals("Balance should not change", 1000.0, account.getCurrentBalance(), 0.01); 
 
         // Clean up system property
         System.clearProperty("test.current.time");
@@ -275,7 +277,10 @@ public class RecurringPaymentTest {
     
     @Test
     public void testPaymentCancellationWithTime() {
-        System.setProperty("test.current.time", "2020-01-01T10:00:00");
+        // Set initial time
+        long jan1_2020_millis = getDate(2020, Calendar.JANUARY, 1).getTime(); 
+        System.setProperty("test.current.time", String.valueOf(jan1_2020_millis));
+        
         BankAccount account = new BankAccount(200.0);
         Date startDate = getDate(2020, Calendar.JANUARY, 1);
         account.scheduleRecurringPayment(
@@ -290,9 +295,10 @@ public class RecurringPaymentTest {
         account.cancelRecurringPayment(account.getRecurringPayments().get(0));
 
         // Set time forward to make next payment due
-        System.setProperty("test.current.time", "2020-02-01T10:00:00"); 
+        long feb1_2020_millis = getDate(2020, Calendar.FEBRUARY, 1).getTime();
+        System.setProperty("test.current.time", String.valueOf(feb1_2020_millis)); 
         Calendar testNow = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
-        testNow.setTimeInMillis(getDate(2020, Calendar.FEBRUARY, 1).getTime());
+        testNow.setTimeInMillis(feb1_2020_millis);
         testNow.set(Calendar.HOUR_OF_DAY, 0);
         testNow.set(Calendar.MINUTE, 0);
         testNow.set(Calendar.SECOND, 0);

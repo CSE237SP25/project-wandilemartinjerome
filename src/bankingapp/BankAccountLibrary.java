@@ -1,5 +1,13 @@
 package bankingapp;
 import java.util.HashMap;
+
+/**
+ * Manages a library of bank accounts.
+ * 
+ * @author Martin Rivera
+ * @author Wandile Hannah
+ * @author Jerome Hsing
+ */
 public class BankAccountLibrary {
 	
 	private HashMap<Integer, BankAccount> BankAccountLibrary = new HashMap<>();
