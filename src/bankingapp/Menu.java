@@ -2,6 +2,7 @@ package bankingapp;
 
 import java.util.List;
 import java.util.Scanner;
+import java.util.Date;
 import java.text.SimpleDateFormat;
 
 /**
@@ -60,8 +61,9 @@ public class Menu {
             System.out.println("8. View Account Limits");
             System.out.println("9. View Personal Information");
             System.out.println("10. Change Password");
-            System.out.println("11. Exit");
-            System.out.print("Enter your choice (1-11): ");
+            System.out.println("11. Manage Recurring Payments");
+            System.out.println("12. Exit");
+            System.out.print("Enter your choice (1-12): ");
             
             int choice = getIntInput();
             
@@ -103,6 +105,9 @@ public class Menu {
                     changePassword();
                     break;
                 case 11:
+                    manageRecurringPayments();
+                    break;
+                case 12:
                     exit = true;
                     System.out.println("Thank you for using the Banking Application. Goodbye!");
                     break;
@@ -662,5 +667,138 @@ public class Menu {
         currentAccountHolder.hidePersonalInfo();
         
         System.out.println("Password changed successfully!");
+    }
+
+    private void manageRecurringPayments() {
+        while (true) {
+            System.out.println("\nRecurring Payments Menu:");
+            System.out.println("1. View Active Recurring Payments");
+            System.out.println("2. Schedule New Recurring Payment");
+            System.out.println("3. Cancel Recurring Payment");
+            System.out.println("4. Process Due Payments");
+            System.out.println("5. Return to Main Menu");
+            System.out.print("Enter your choice (1-5): ");
+
+            int choice = getIntInput();
+
+            switch (choice) {
+                case 1:
+                    viewRecurringPayments();
+                    break;
+                case 2:
+                    scheduleNewRecurringPayment();
+                    break;
+                case 3:
+                    cancelRecurringPayment();
+                    break;
+                case 4:
+                    processDuePayments();
+                    break;
+                case 5:
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void viewRecurringPayments() {
+        List<RecurringPayment> payments = currentAccount.getRecurringPayments();
+        if (payments.isEmpty()) {
+            System.out.println("No recurring payments scheduled.");
+            return;
+        }
+
+        System.out.println("\nActive Recurring Payments:");
+        for (int i = 0; i < payments.size(); i++) {
+            RecurringPayment payment = payments.get(i);
+            if (payment.isActive()) {
+                System.out.printf("%d. Amount: $%.2f, Description: %s, Frequency: %s, Next Payment: %s%n",
+                    i + 1,
+                    payment.getAmount(),
+                    payment.getDescription(),
+                    payment.getFrequency(),
+                    new SimpleDateFormat("yyyy-MM-dd").format(payment.getNextPaymentDate()));
+            }
+        }
+    }
+
+    private void scheduleNewRecurringPayment() {
+        System.out.print("Enter payment amount: $");
+        double amount = getDoubleInput();
+
+        System.out.print("Enter payment description: ");
+        String description = scanner.nextLine();
+
+        System.out.print("Enter start date (YYYY-MM-DD): ");
+        Date startDate;
+        try {
+            startDate = new SimpleDateFormat("yyyy-MM-dd").parse(scanner.nextLine());
+        } catch (Exception e) {
+            System.out.println("Invalid date format. Please use YYYY-MM-DD.");
+            return;
+        }
+
+        System.out.println("Select payment frequency:");
+        System.out.println("1. Daily");
+        System.out.println("2. Weekly");
+        System.out.println("3. Monthly");
+        System.out.println("4. Yearly");
+        System.out.print("Enter your choice (1-4): ");
+        
+        RecurringPayment.PaymentFrequency frequency;
+        switch (getIntInput()) {
+            case 1:
+                frequency = RecurringPayment.PaymentFrequency.DAILY;
+                break;
+            case 2:
+                frequency = RecurringPayment.PaymentFrequency.WEEKLY;
+                break;
+            case 3:
+                frequency = RecurringPayment.PaymentFrequency.MONTHLY;
+                break;
+            case 4:
+                frequency = RecurringPayment.PaymentFrequency.YEARLY;
+                break;
+            default:
+                System.out.println("Invalid frequency choice.");
+                return;
+        }
+
+        System.out.print("Enter recipient account ID: ");
+        String recipientId = scanner.nextLine();
+
+        try {
+            currentAccount.scheduleRecurringPayment(amount, description, startDate, frequency, recipientId);
+            System.out.println("Recurring payment scheduled successfully!");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void cancelRecurringPayment() {
+        List<RecurringPayment> payments = currentAccount.getRecurringPayments();
+        if (payments.isEmpty()) {
+            System.out.println("No recurring payments to cancel.");
+            return;
+        }
+
+        viewRecurringPayments();
+        System.out.print("Enter the number of the payment to cancel: ");
+        int choice = getIntInput();
+
+        if (choice < 1 || choice > payments.size()) {
+            System.out.println("Invalid payment number.");
+            return;
+        }
+
+        RecurringPayment payment = payments.get(choice - 1);
+        currentAccount.cancelRecurringPayment(payment);
+        System.out.println("Recurring payment cancelled successfully!");
+    }
+
+    private void processDuePayments() {
+        int processed = currentAccount.processRecurringPayments();
+        System.out.printf("Processed %d recurring payment(s).%n", processed);
     }
 }

@@ -25,6 +25,9 @@ public class BankAccount {
 
     // Transaction history
     private List<Transaction> transactionHistory;
+    
+    // Recurring payments
+    private List<RecurringPayment> recurringPayments;
 
     /**
      * Constructs a new bank account with an initial balance of 0.
@@ -34,6 +37,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
     }
 
     /**
@@ -46,6 +50,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -64,6 +69,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
         this.transactionHistory = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -250,5 +256,81 @@ public class BankAccount {
     public void clearTransactionHistory() {
         transactionHistory.clear();
         recordTransaction(TransactionType.ADMIN, 0, "Transaction history cleared");
+    }
+
+    /**
+     * Adds a new recurring payment to this account.
+     * 
+     * @param amount The amount to be paid.
+     * @param description Description of the payment.
+     * @param startDate When the payments should start.
+     * @param frequency How often the payment should occur.
+     * @param recipientAccountId The account ID to send payment to.
+     * @return The created RecurringPayment object.
+     * @throws IllegalArgumentException if amount is invalid or exceeds limits.
+     */
+    public RecurringPayment scheduleRecurringPayment(double amount, String description, 
+            Date startDate, RecurringPayment.PaymentFrequency frequency, String recipientAccountId) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Payment amount must be positive");
+        }
+        if (amount > maxWithdrawalLimit) {
+            throw new IllegalArgumentException("Payment amount exceeds withdrawal limit");
+        }
+        
+        RecurringPayment payment = new RecurringPayment(amount, description, startDate, 
+                                                       frequency, recipientAccountId);
+        recurringPayments.add(payment);
+        return payment;
+    }
+
+    /**
+     * Processes all due recurring payments.
+     * 
+     * @return The number of payments processed.
+     */
+    public int processRecurringPayments() {
+        int processed = 0;
+        for (RecurringPayment payment : recurringPayments) {
+            while (payment.isPaymentDue()) {
+                try {
+                    if (balance >= payment.getAmount()) {
+                        balance -= payment.getAmount();
+                        recordTransaction(TransactionType.RECURRING_PAYMENT, 
+                                       payment.getAmount(),
+                                       "Recurring payment: " + payment.getDescription());
+                        payment.updateNextPaymentDate();
+                        processed++;
+                    } else {
+                        recordTransaction(TransactionType.FAILED, payment.getAmount(),
+                                       "Failed recurring payment: Insufficient funds");
+                        break;
+                    }
+                } catch (Exception e) {
+                    recordTransaction(TransactionType.FAILED, payment.getAmount(),
+                                   "Failed recurring payment: " + e.getMessage());
+                    break;
+                }
+            }
+        }
+        return processed;
+    }
+
+    /**
+     * Gets all recurring payments for this account.
+     * 
+     * @return List of recurring payments.
+     */
+    public List<RecurringPayment> getRecurringPayments() {
+        return new ArrayList<>(recurringPayments);
+    }
+
+    /**
+     * Cancels a recurring payment.
+     * 
+     * @param payment The recurring payment to cancel.
+     */
+    public void cancelRecurringPayment(RecurringPayment payment) {
+        payment.setActive(false);
     }
 }
