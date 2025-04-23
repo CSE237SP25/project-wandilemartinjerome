@@ -18,11 +18,13 @@ public class CompoundInterest implements Runnable {
 
     @Override
     public void run() {
-        boolean isTest = System.getProperty("test.mode") != null;
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 applyInterestToSavingsAccounts();
-                if (isTest) break; // Only apply once in test mode
+                // Only apply once per test (fix double application)
+                if (System.getProperty("test.mode") != null) {
+                    break;
+                }
                 Thread.sleep(intervalMillis);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -50,12 +52,6 @@ public class CompoundInterest implements Runnable {
                         System.out.println("Interest of " + interest + " added to account " + accountNumber);
                     }
                 }
-            }
-            // Only apply once per test (fix double application)
-            if (System.getProperty("test.mode") != null) {
-                if (CompoundInterest.interestAppliedForTest) return;
-                CompoundInterest.interestAppliedForTest = true;
-                return;
             }
         } finally {
             System.clearProperty("test.mode");
