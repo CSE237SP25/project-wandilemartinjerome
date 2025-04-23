@@ -18,9 +18,11 @@ public class CompoundInterest implements Runnable {
 
     @Override
     public void run() {
+        boolean isTest = System.getProperty("test.mode") != null;
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 applyInterestToSavingsAccounts();
+                if (isTest) break; // Only apply once in test mode
                 Thread.sleep(intervalMillis);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

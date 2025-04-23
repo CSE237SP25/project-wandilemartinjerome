@@ -295,7 +295,7 @@ public class Menu {
         double amount = getDoubleInput();
         try {
             currentAccount.deposit(amount);
-            System.out.printf("You have successfully deposited $%.2f\n", amount);
+            System.out.printf("Successfully deposited $%.2f\n", amount);
             System.out.printf("New Balance: $%.2f\n", currentAccount.getCurrentBalance());
             confirmAndExitIfTestMode("Deposit confirmed");
         } catch (IllegalArgumentException e) {
@@ -316,7 +316,7 @@ public class Menu {
         try {
             boolean success = currentAccount.withdraw(amount);
             if (success) {
-                System.out.printf("You have successfully withdrawn $%.2f\n", amount);
+                System.out.printf("Successfully withdrew $%.2f\n", amount);
                 System.out.printf("New Balance: $%.2f\n", currentAccount.getCurrentBalance());
                 confirmAndExitIfTestMode("Withdrawal confirmed");
             } else {
