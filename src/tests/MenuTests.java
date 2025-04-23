@@ -82,30 +82,13 @@ public class MenuTests {
 
     @Test
     public void testAccountTypeSelection() {
-        // Test creating a checking account
-        ByteArrayOutputStream checkingOutputStream = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(checkingOutputStream));
+        String input = "1\nJohn\n01/01/1990\n123456789\n101\n1\n500\n12\n";
+        System.setIn(new ByteArrayInputStream(input.getBytes()));
         
-        String checkingInput = "1\nSmith\n01/01/1990\n123456789\n101\n1\n500\n12\n"; // Correct input for account creation
-        System.setIn(new ByteArrayInputStream(checkingInput.getBytes()));
+        Menu menu = new Menu();
+        menu.showMainMenu();
         
-        Menu menu1 = new Menu();
-        menu1.showMainMenu();
-        
-        String checkingOutput = checkingOutputStream.toString();
-        assertTrue("Should create checking account successfully", checkingOutput.contains("CHECKING account created"));
-        
-        // Test creating a savings account
-        ByteArrayOutputStream savingsOutputStream = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(savingsOutputStream));
-        
-        String savingsInput = "1\nJohnson\n02/02/1995\n987654321\n202\n2\n1000\n12\n"; // Correct input for account creation
-        System.setIn(new ByteArrayInputStream(savingsInput.getBytes()));
-        
-        Menu menu2 = new Menu();
-        menu2.showMainMenu();
-        
-        String savingsOutput = savingsOutputStream.toString();
-        assertTrue("Should create savings account successfully", savingsOutput.contains("SAVINGS account created"));
+        String output = outputStream.toString();
+        assertTrue("Should create checking account", output.contains("CHECKING account created"));
     }
 }

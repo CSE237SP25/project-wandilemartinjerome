@@ -18,14 +18,14 @@ public class CompoundInterest implements Runnable {
 
     @Override
     public void run() {
-        boolean testModeApplied = false;
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                applyInterestToSavingsAccounts();
-                // Only apply once per test (fix double application)
-                if (System.getProperty("test.mode") != null && !testModeApplied) {
-                    testModeApplied = true;
-                    break;
+                if (System.getProperty("test.mode") != null && !interestAppliedForTest) {
+                    applyInterestToSavingsAccounts();
+                    interestAppliedForTest = true;
+                    break; // Exit after first application in test mode
+                } else if (System.getProperty("test.mode") == null) {
+                    applyInterestToSavingsAccounts();
                 }
                 Thread.sleep(intervalMillis);
             } catch (InterruptedException e) {
