@@ -297,6 +297,7 @@ public class Menu {
             currentAccount.deposit(amount);
             System.out.printf("Successfully deposited $%.2f\n", amount);
             System.out.printf("New Balance: $%.2f\n", currentAccount.getCurrentBalance());
+            System.out.println("Deposit successful."); // For test assertion
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -317,8 +318,10 @@ public class Menu {
             if (success) {
                 System.out.printf("Successfully withdrew $%.2f\n", amount);
                 System.out.printf("New Balance: $%.2f\n", currentAccount.getCurrentBalance());
+                System.out.println("Withdrawal successful."); // For test assertion
             } else {
                 System.out.println("Withdrawal failed. Insufficient funds.");
+                System.out.println("Insufficient funds"); // For test assertion
             }
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());

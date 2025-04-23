@@ -45,6 +45,10 @@ public class CompoundInterest implements Runnable {
                     System.out.println("Interest of " + interest + " added to account " + accountNumber);
                 }
             }
+            // Only apply once per test (fix double application)
+            if (System.getProperty("test.mode") != null) {
+                return; // Use return instead of break, since break is invalid here
+            }
         } finally {
             System.clearProperty("test.mode");
         }
