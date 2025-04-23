@@ -39,29 +39,33 @@ public class CompoundInterest implements Runnable {
      * Applies compound interest to all active savings accounts.
      */
     private void applyInterestToSavingsAccounts() {
-        System.setProperty("test.mode", "true");
-        try {
-            Map<Integer, BankAccount> accounts = bankAccounts.getBankAccounts();
-            for (Map.Entry<Integer, BankAccount> entry : accounts.entrySet()) {
-                Integer accountNumber = entry.getKey();
-                BankAccount account = entry.getValue();
-                if (account != null && account.getAccountType() == AccountType.SAVINGS) {
-                    double balance = account.getCurrentBalance();
-                    double interest = balance * INTEREST_RATE;
-                    account.deposit(interest);
-                    // Suppress interest messages and only print in non-test mode
-                    if (System.getProperty("test.mode") == null) {
-                        System.out.println("Interest of " + interest + " added to account " + accountNumber);
-                    }
-                }
+        Map<Integer, BankAccount> accounts = bankAccounts.getBankAccounts();
+        for (Map.Entry<Integer, BankAccount> entry : accounts.entrySet()) {
+            Integer accountNumber = entry.getKey();
+            BankAccount account = entry.getValue();
+            if (account != null && account.getAccountType() == AccountType.SAVINGS 
+                && bankAccounts.isAccountActive(accountNumber)) {
+                double balance = account.getCurrentBalance();
+                double interest = balance * INTEREST_RATE;
+                account.deposit(interest);
+                System.out.printf("Applied %.2f%% interest ($%.2f) to account %d. New balance: $%.2f%n",
+                    INTEREST_RATE * 100, interest, accountNumber, account.getCurrentBalance());
             }
-        } finally {
-            System.clearProperty("test.mode");
         }
     }
 
-    // Reset static flag before each test run
+    /**
+     * Resets the test interest flag. Only used for testing.
+     */
     public static void resetTestInterestFlag() {
         interestAppliedForTest = false;
+    }
+
+    /**
+     * Gets the interest rate as a percentage.
+     * @return The interest rate as a percentage (e.g., 20.0 for 20%)
+     */
+    public static double getInterestRate() {
+        return INTEREST_RATE * 100;
     }
 }

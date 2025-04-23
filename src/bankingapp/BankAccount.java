@@ -27,8 +27,9 @@ public class BankAccount {
     private double maxWithdrawalLimit;
     private double maxDepositLimit;
 
-    // Transaction history
+    // Transaction history and scheduled transfers
     private List<Transaction> transactionHistory;
+    private List<ScheduledTransfer> scheduledTransfers;
     
     // Recurring payments
     private List<RecurringPayment> recurringPayments;
@@ -41,6 +42,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         this.recurringPayments = new ArrayList<>();
         this.accountType = AccountType.CHECKING; // Default to checking account
     }
@@ -55,6 +57,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         this.recurringPayments = new ArrayList<>();
         this.accountType = accountType;
     }
@@ -69,6 +72,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         this.recurringPayments = new ArrayList<>();
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
@@ -87,6 +91,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         this.recurringPayments = new ArrayList<>();
         this.accountType = accountType;
         
@@ -108,6 +113,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         this.recurringPayments = new ArrayList<>();
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
@@ -128,7 +134,10 @@ public class BankAccount {
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
         this.accountType = accountType;
+
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -206,10 +215,9 @@ public class BankAccount {
         }
         
         this.balance += amount;
-        if(accountType == AccountType.CHECKING){
-            recordTransaction(TransactionType.DEPOSIT, amount, "Deposit Checkings");
-        }
-        else{
+        if(accountType == AccountType.CHECKING) {
+            recordTransaction(TransactionType.DEPOSIT, amount, "Deposit Checking");
+        } else {
             recordTransaction(TransactionType.DEPOSIT, amount, "Deposit Savings");
         }
     }
@@ -238,11 +246,10 @@ public class BankAccount {
             throw new IllegalArgumentException("Withdrawal amount cannot be negative");
         }
 
-        // Block withdrawals from savings accounts (test expects exception)
         if (accountType == AccountType.SAVINGS) {
             throw new IllegalArgumentException("Can not withdraw from Savings Account");
         }
-
+        
         if (amount > this.maxWithdrawalLimit) {
             throw new IllegalArgumentException("Withdrawal amount exceeds maximum limit of $" + this.maxWithdrawalLimit);
         }
@@ -363,6 +370,67 @@ public class BankAccount {
     }
 
     /**
+     * Schedules a transfer to be executed at a future date.
+     * 
+     * @param destination The destination account
+     * @param amount The amount to transfer
+     * @param scheduledDate The date to execute the transfer
+     * @param description Description of the transfer
+     * @return The created ScheduledTransfer object
+     */
+    public ScheduledTransfer scheduleTransfer(BankAccount destination, double amount, Date scheduledDate, String description) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        if (destination == null) {
+            throw new IllegalArgumentException("Destination account cannot be null");
+        }
+        if (scheduledDate == null) {
+            throw new IllegalArgumentException("Scheduled date cannot be null");
+        }
+        if (scheduledDate.before(new Date())) {
+            throw new IllegalArgumentException("Scheduled date must be in the future");
+        }
+
+        ScheduledTransfer scheduledTransfer = new ScheduledTransfer(this, destination, amount, scheduledDate, description);
+        scheduledTransfers.add(scheduledTransfer);
+        recordTransaction(TransactionType.SCHEDULED, amount, "Scheduled transfer: " + description);
+        return scheduledTransfer;
+    }
+
+    /**
+     * Processes any scheduled transfers that are due.
+     * 
+     * @param currentDate The current date to check against
+     * @return The number of transfers processed
+     */
+    public int processScheduledTransfers(Date currentDate) {
+        int processed = 0;
+        Iterator<ScheduledTransfer> iterator = scheduledTransfers.iterator();
+        
+        while (iterator.hasNext()) {
+            ScheduledTransfer transfer = iterator.next();
+            if (transfer.isReadyToExecute(currentDate)) {
+                if (transfer.execute()) {
+                    processed++;
+                    iterator.remove();
+                }
+            }
+        }
+        
+        return processed;
+    }
+
+    /**
+     * Gets all scheduled transfers for this account.
+     * 
+     * @return List of scheduled transfers
+     */
+    public List<ScheduledTransfer> getScheduledTransfers() {
+        return new ArrayList<>(scheduledTransfers);
+    }
+
+    /**
      * Adds a new recurring payment to this account.
      * 
      * @param amount The amount to be paid.
@@ -388,7 +456,6 @@ public class BankAccount {
         return payment;
     }
 
-    // Utility method to get the current Calendar instance for tests or real time
     /**
      * Utility method to get the current Calendar instance for tests or real time.
      * Public access to allow testing from other packages.
@@ -400,17 +467,8 @@ public class BankAccount {
         String testTime = System.getProperty("test.current.time");
         if (testTime != null && !testTime.trim().isEmpty()) {
             try {
-                // Try both millis and ISO string
-                if (testTime.matches("\\d+")) {
-                    cal.setTimeInMillis(Long.parseLong(testTime));
-                } else {
-                    // Try ISO_LOCAL_DATE_TIME
-                    java.time.LocalDateTime ldt = java.time.LocalDateTime.parse(testTime);
-                    java.time.ZoneId zone = java.time.ZoneId.of("America/Chicago");
-                    java.time.ZonedDateTime zdt = ldt.atZone(zone);
-                    cal.setTime(java.util.Date.from(zdt.toInstant()));
-                }
-            } catch (Exception e) {
+                cal.setTimeInMillis(Long.parseLong(testTime));
+            } catch (NumberFormatException e) {
                 System.err.println("[BankAccount] WARN: Could not parse test time property '" + testTime + "'. Using real time.");
                 // Fall through to use real time
             }
