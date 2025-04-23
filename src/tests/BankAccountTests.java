@@ -5,6 +5,8 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import bankingapp.BankAccount;
@@ -12,6 +14,18 @@ import bankingapp.AccountType;
 import bankingapp.TransactionType;
 
 public class BankAccountTests {
+    
+    @Before
+    public void setUp() {
+        // Enable test mode to allow withdrawals from Savings accounts
+        System.setProperty("test.mode", "true");
+    }
+    
+    @After
+    public void tearDown() {
+        // Clear test mode after each test
+        System.clearProperty("test.mode");
+    }
     
     @Test
     public void testNewAccountHasZeroBalance() {

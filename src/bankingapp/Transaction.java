@@ -53,6 +53,15 @@ public class Transaction {
         return balanceAfterTransaction;
     }
 
+    /**
+     * Gets the account balance after this transaction was completed.
+     * 
+     * @return The balance after the transaction
+     */
+    public double getFinalBalance() {
+        return balanceAfterTransaction;
+    }
+
     @Override
     public String toString() {
         return String.format("[%s] %s: $%.2f - %s (Balance $%.2f)", date, type, amount, description, balanceAfterTransaction);

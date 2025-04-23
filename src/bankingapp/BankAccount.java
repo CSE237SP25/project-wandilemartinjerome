@@ -57,6 +57,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         this.recurringPayments = new ArrayList<>();
         this.accountType = accountType;
     }
@@ -90,6 +91,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         this.recurringPayments = new ArrayList<>();
         this.accountType = accountType;
         
@@ -132,6 +134,8 @@ public class BankAccount {
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
         this.accountType = accountType;
 
         // Record initial deposit if balance is positive
@@ -211,10 +215,9 @@ public class BankAccount {
         }
         
         this.balance += amount;
-        if(accountType == AccountType.CHECKING){
-            recordTransaction(TransactionType.DEPOSIT, amount, "Deposit Checkings");
-        }
-        else{
+        if(accountType == AccountType.CHECKING) {
+            recordTransaction(TransactionType.DEPOSIT, amount, "Deposit Checking");
+        } else {
             recordTransaction(TransactionType.DEPOSIT, amount, "Deposit Savings");
         }
     }
@@ -243,8 +246,8 @@ public class BankAccount {
             throw new IllegalArgumentException("Withdrawal amount cannot be negative");
         }
 
-        if(accountType != AccountType.CHECKING){
-            throw new IllegalArgumentException("Can not witdrawl from Savings Account");
+        if (accountType == AccountType.SAVINGS) {
+            throw new IllegalArgumentException("Can not withdraw from Savings Account");
         }
         
         if (amount > this.maxWithdrawalLimit) {
@@ -427,6 +430,7 @@ public class BankAccount {
         return new ArrayList<>(scheduledTransfers);
     }
 
+    /**
      * Adds a new recurring payment to this account.
      * 
      * @param amount The amount to be paid.
@@ -452,7 +456,6 @@ public class BankAccount {
         return payment;
     }
 
-    // Utility method to get the current Calendar instance for tests or real time
     /**
      * Utility method to get the current Calendar instance for tests or real time.
      * Public access to allow testing from other packages.
