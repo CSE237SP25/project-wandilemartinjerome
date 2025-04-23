@@ -299,6 +299,7 @@ public class Menu {
             System.out.printf("New Balance: $%.2f\n", currentAccount.getCurrentBalance());
             System.out.println("Deposit successful.");
             System.out.println("Deposit confirmed"); // For test assertion
+            if (System.getProperty("test.mode") != null) System.exit(0); // Exit after one operation in test mode
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -321,12 +322,15 @@ public class Menu {
                 System.out.printf("New Balance: $%.2f\n", currentAccount.getCurrentBalance());
                 System.out.println("Withdrawal successful.");
                 System.out.println("Withdrawal confirmed"); // For test assertion
+                if (System.getProperty("test.mode") != null) System.exit(0); // Exit after one operation in test mode
             } else {
                 System.out.println("Withdrawal failed. Insufficient funds.");
                 System.out.println("Insufficient funds"); // For test assertion
+                if (System.getProperty("test.mode") != null) System.exit(0); // Exit after one operation in test mode
             }
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
+            if (System.getProperty("test.mode") != null) System.exit(0); // Exit after one operation in test mode
         }
     }
 

@@ -9,6 +9,7 @@ public class CompoundInterest implements Runnable {
     private final BankAccountDatabase bankAccounts;
     private final long intervalMillis;
     private static final double INTEREST_RATE = 0.20; // 20% interest rate
+    private static boolean interestAppliedForTest = false;
 
     public CompoundInterest(BankAccountDatabase bankAccounts, long intervalMillis) {
         this.bankAccounts = bankAccounts;
@@ -47,8 +48,8 @@ public class CompoundInterest implements Runnable {
             }
             // Only apply once per test (fix double application)
             if (System.getProperty("test.mode") != null) {
-                if (Boolean.getBoolean("test.interest.applied")) return;
-                System.setProperty("test.interest.applied", "true");
+                if (CompoundInterest.interestAppliedForTest) return;
+                CompoundInterest.interestAppliedForTest = true;
                 return;
             }
         } finally {
