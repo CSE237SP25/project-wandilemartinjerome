@@ -1,10 +1,9 @@
 package bankingapp;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Date;
-import java.text.SimpleDateFormat;
-import java.util.NoSuchElementException;
 
 /**
  * Main menu interface for the Banking Application.
@@ -19,14 +18,30 @@ public class Menu {
     private BankAccountDatabase accountDatabase;
     private AccountHolder currentAccountHolder;
     
+    // Inner class to store transaction statistics
+    private static class TransactionStatistics {
+        double totalDeposits = 0;
+        double totalWithdrawals = 0;
+        double totalTransfers = 0;
+        int depositCount = 0;
+        int withdrawalCount = 0;
+        int transferCount = 0;
+        int failedCount = 0;
+        Transaction largestDeposit = null;
+        Transaction largestWithdrawal = null;
+    }
+    
     /**
      * Constructs a new Menu with initialized components.
      */
     public Menu() {
         scanner = new Scanner(System.in);
-        currentAccount = new BankAccount(1000.0); // Default account with $1000
+        currentAccount = new BankAccount(500.0); // Default account with $500
         accountDatabase = new BankAccountDatabase();
         currentAccountHolder = new AccountHolder();
+        
+        // Add default account to database
+        accountDatabase.addBankAccount(currentAccount);
     }
     
     /**
@@ -159,6 +174,7 @@ public class Menu {
 
         // Add account holder to the system
         accountDatabase.addAccountHolder(currentAccountHolder);
+        
         // Choose account category
         System.out.println("\nSelect Account Category:");
         System.out.println("1. Personal Account");
@@ -208,14 +224,13 @@ public class Menu {
             }
 
             accountDatabase.addBankAccount(currentAccount);
-            accountDatabase.addBankAccount(currentAccount);
             System.out.println("Account number: " + currentAccount.hashCode());
             System.out.println(accountType + " account created.");
-            System.out.println("Current balance: $" + currentAccount.getCurrentBalance());
+            System.out.printf("Current balance: $%.2f%n", currentAccount.getCurrentBalance());
             
             // Display account limits
-            System.out.println("Maximum withdrawal limit: $" + currentAccount.getMaxWithdrawalLimit());
-            System.out.println("Maximum deposit limit: $" + currentAccount.getMaxDepositLimit());
+            System.out.printf("Maximum withdrawal limit: $%.2f%n", currentAccount.getMaxWithdrawalLimit());
+            System.out.printf("Maximum deposit limit: $%.2f%n", currentAccount.getMaxDepositLimit());
             
             currentAccountHolder.addBankAccount(currentAccountHolder, currentAccount.hashCode());
 
@@ -252,7 +267,7 @@ public class Menu {
                 return false;
             }
         } catch (NumberFormatException e) {
-            System.out.println("Invalid account number. Please enter a valid number.");
+            System.out.println("Invalid account number format.");
             return false;
         }
     }
@@ -264,9 +279,8 @@ public class Menu {
      * @return The AccountHolder object if found, null otherwise
      */
     private AccountHolder findAccountHolder(int accountNumber) {
-        // This is a simplified implementation - in a real system, you'd want a more robust
-        // way to associate accounts with account holders
-        for (AccountHolder holder : accountDatabase.getAccountHolders()) {
+        ArrayList<AccountHolder> accountHolders = new ArrayList<>(accountDatabase.getAccountHolders());
+        for (AccountHolder holder : accountHolders) {
             if (holder.findBankAccount(holder, accountNumber)) {
                 return holder;
             }
@@ -278,10 +292,9 @@ public class Menu {
      * Displays the current account balance.
      */
     private void checkBalance() {
-        if (!accountExists()) return;
-        
-        System.out.println("\n--- Account Balance ---");
-        System.out.printf("Current Balance: $%.2f\n", currentAccount.getCurrentBalance());
+        if (accountExists()) {
+            System.out.printf("Current Balance: $%.2f%n", currentAccount.getCurrentBalance());
+        }
     }
     
     /**
@@ -290,16 +303,23 @@ public class Menu {
     private void deposit() {
         if (!accountExists()) return;
         
-        System.out.println("\n--- Deposit Funds ---");
-        System.out.print("Enter amount to deposit: $");
-        double amount = getDoubleInput();
+        System.out.print("Enter amount to deposit: ");
         try {
-            currentAccount.deposit(amount);
-            System.out.printf("Deposit successful. Your new balance is $%.2f%n", currentAccount.getCurrentBalance());
-            confirmAndExitIfTestMode("Deposit confirmed");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
-            confirmAndExitIfTestMode("Error");
+            double amount = Double.parseDouble(scanner.nextLine());
+            if (amount <= 0) {
+                System.out.println("Deposit amount must be positive.");
+                return;
+            }
+            
+            try {
+                currentAccount.deposit(amount);
+                System.out.printf("Deposit successful. Your new balance is $%.2f%n", 
+                    currentAccount.getCurrentBalance());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Please enter a valid number.");
         }
     }
     
@@ -309,70 +329,76 @@ public class Menu {
     private void withdraw() {
         if (!accountExists()) return;
         
-        System.out.println("\n--- Withdraw Funds ---");
-        System.out.print("Enter amount to withdraw: $");
-        double amount = getDoubleInput();
+        System.out.print("Enter amount to withdraw: ");
         try {
-            boolean success = currentAccount.withdraw(amount);
-            if (success) {
-                System.out.printf("Withdrawal successful. Your new balance is $%.2f%n", currentAccount.getCurrentBalance());
-                confirmAndExitIfTestMode("Withdrawal confirmed");
-            } else {
-                System.out.println("Insufficient funds in account.");
-                confirmAndExitIfTestMode("Insufficient funds");
+            double amount = Double.parseDouble(scanner.nextLine());
+            if (amount <= 0) {
+                System.out.println("Withdrawal amount must be positive.");
+                return;
             }
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
-            confirmAndExitIfTestMode("Error");
+            
+            try {
+                if (currentAccount.withdraw(amount)) {
+                    System.out.printf("Withdrawal successful. Your new balance is $%.2f%n", 
+                        currentAccount.getCurrentBalance());
+                } else {
+                    System.out.println("Insufficient funds in account.");
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Please enter a valid number.");
         }
     }
-
+    
     /**
      * Displays the transaction history for the given account.
      */
-    private static void viewTransactionHistory(BankAccount account) {
+    private void viewTransactionHistory(BankAccount account) {
         List<Transaction> history = account.getTransactionHistory();
         if (history.isEmpty()) {
-            System.out.println("No transaction history available.");
+            System.out.println("No transactions found.");
+            return;
         }
-        else {
-            System.out.println("\n===== Transaction History =====");
-            for (Transaction transaction : history) {
-                System.out.println(transaction);
-            }
-            System.out.println("==============================\n");
+        
+        System.out.println("\nTransaction History:");
+        System.out.println("-------------------");
+        for (Transaction transaction : history) {
+            System.out.printf("%s - %s: $%.2f (Balance: $%.2f)%n",
+                transaction.getDate(),
+                transaction.getType(),
+                transaction.getAmount(),
+                transaction.getFinalBalance());
         }
     }
-
+    
     /**
      * Displays the transaction management submenu.
      */
     private void showTransactionMenu() {
-        boolean back = false;
-        while (!back) {
-            System.out.println("\nTransaction Management:");
-            System.out.println("1. View All Transactions");
-            System.out.println("2. View Transactions by Type");
-            System.out.println("3. Transaction Analysis Report");
-            System.out.println("4. Back to Main Menu");
-            System.out.print("Enter your choice (1-4): ");
-            int choice = getIntInput();
-            switch (choice) {
-                case 1:
-                    viewTransactionHistory(currentAccount);
-                    break;
-                case 2:
-                    viewTransactionsByType();
-                    break;
-                case 3:
-                    generateTransactionAnalysisReport();
-                    break;
-                case 4:
-                    back = true;
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-            }
+        System.out.println("\nTransaction Management Menu:");
+        System.out.println("1. View All Transactions");
+        System.out.println("2. View Transactions by Type");
+        System.out.println("3. Generate Transaction Analysis Report");
+        System.out.println("4. Return to Main Menu");
+        System.out.print("Enter your choice (1-4): ");
+        
+        int choice = getIntInput();
+        switch (choice) {
+            case 1:
+                viewTransactionHistory(currentAccount);
+                break;
+            case 2:
+                viewTransactionsByType();
+                break;
+            case 3:
+                generateTransactionAnalysisReport();
+                break;
+            case 4:
+                return;
+            default:
+                System.out.println("Invalid choice. Please try again.");
         }
     }
     
@@ -380,9 +406,10 @@ public class Menu {
      * Displays the current account limits.
      */
     private void viewLimits() {
-        System.out.println("\n--- Account Limits ---");
-        System.out.printf("Maximum Withdrawal Limit: $%.2f\n", currentAccount.getMaxWithdrawalLimit());
-        System.out.printf("Maximum Deposit Limit: $%.2f\n", currentAccount.getMaxDepositLimit());
+        if (accountExists()) {
+            System.out.printf("Maximum withdrawal limit: $%.2f%n", currentAccount.getMaxWithdrawalLimit());
+            System.out.printf("Maximum deposit limit: $%.2f%n", currentAccount.getMaxDepositLimit());
+        }
     }
     
     /**
@@ -393,20 +420,9 @@ public class Menu {
     private int getIntInput() {
         while (true) {
             try {
-                String line = scanner.nextLine();
-                if (System.getProperty("test.mode") != null && (line == null || line.isEmpty())) {
-                    System.out.println("[Test Mode] Input exhausted. Exiting.");
-                    System.exit(0);
-                }
-                return Integer.parseInt(line.trim());
-            } catch (NoSuchElementException e) {
-                if (System.getProperty("test.mode") != null) {
-                    System.out.println("[Test Mode] Input exhausted. Exiting.");
-                    System.exit(0);
-                }
-                throw e;
+                return Integer.parseInt(scanner.nextLine().trim());
             } catch (NumberFormatException e) {
-                System.out.print("Invalid input. Please enter a number: ");
+                System.out.print("Invalid input. Please enter a valid number: ");
             }
         }
     }
@@ -419,37 +435,27 @@ public class Menu {
     private double getDoubleInput() {
         while (true) {
             try {
-                String line = scanner.nextLine();
-                if (System.getProperty("test.mode") != null && (line == null || line.isEmpty())) {
-                    System.out.println("[Test Mode] Input exhausted. Exiting.");
-                    System.exit(0);
-                }
-                return Double.parseDouble(line.trim());
-            } catch (NoSuchElementException e) {
-                if (System.getProperty("test.mode") != null) {
-                    System.out.println("[Test Mode] Input exhausted. Exiting.");
-                    System.exit(0);
-                }
-                throw e;
+                return Double.parseDouble(scanner.nextLine().trim());
             } catch (NumberFormatException e) {
-                System.out.print("Invalid input. Please enter a number: ");
+                System.out.print("Invalid input. Please enter a valid number: ");
             }
         }
     }
-
+    
     /**
      * Allows the user to view transaction filtered by type.
      */
     private void viewTransactionsByType() {
-        System.out.println("\nSelect transaction type to view:");
+        System.out.println("\nSelect Transaction Type:");
         System.out.println("1. Deposits");
         System.out.println("2. Withdrawals");
         System.out.println("3. Transfers");
         System.out.println("4. Failed Transactions");
-        System.out.println("5. All Types");
-        System.out.print("Enter your choice (1-5): ");
+        System.out.print("Enter your choice (1-4): ");
+        
         int choice = getIntInput();
         TransactionType type = null;
+        
         switch (choice) {
             case 1:
                 type = TransactionType.DEPOSIT;
@@ -463,47 +469,52 @@ public class Menu {
             case 4:
                 type = TransactionType.FAILED;
                 break;
-            case 5:
-                viewTransactionHistory(currentAccount);
-                return;
             default:
-                System.out.println("Invalid choice. Showing all transactions");
-                viewTransactionHistory(currentAccount);
+                System.out.println("Invalid choice.");
                 return;
         }
-
+        
         List<Transaction> filteredTransactions = currentAccount.getTransactionHistoryByType(type);
-
         if (filteredTransactions.isEmpty()) {
-            System.out.println("No transactions of type " + type + " found.");
+            System.out.println("No transactions found of type: " + type);
+            return;
         }
-        else {
-            System.out.println("\n===== " + type + " Transactions =====");
-            for (Transaction transaction : filteredTransactions) {
-                System.out.println(transaction);
-            }
-            System.out.println("==============================\n");
+        
+        System.out.println("\n" + type + " Transactions:");
+        System.out.println("----------------------");
+        for (Transaction transaction : filteredTransactions) {
+            System.out.printf("%s: $%.2f (Balance: $%.2f) - %s%n",
+                transaction.getDate(),
+                transaction.getAmount(),
+                transaction.getFinalBalance(),
+                transaction.getDescription());
         }
     }
-
+    
     /**
      * Generates and displays a comprehensive transaction analysis report.
      */
     private void generateTransactionAnalysisReport() {
         List<Transaction> history = currentAccount.getTransactionHistory();
         if (history.isEmpty()) {
-            System.out.println("No transaction history available for analysis.");
+            System.out.println("No transactions available for analysis.");
             return;
         }
         
-        // Calculate transaction statistics
         TransactionStatistics stats = calculateTransactionStatistics(history);
+        int totalTransactions = history.size();
         
-        // Display the report sections
-        displayTransactionSummary(stats, history.size());
+        System.out.println("\nTransaction Analysis Report");
+        System.out.println("==========================");
+        
+        displayTransactionSummary(stats, totalTransactions);
+        System.out.println();
         displayFinancialSummary(stats);
+        System.out.println();
         displayTransactionAverages(stats);
+        System.out.println();
         displayLargestTransactions(stats);
+        System.out.println();
         displayRecommendations(stats);
     }
     
@@ -517,32 +528,25 @@ public class Menu {
         TransactionStatistics stats = new TransactionStatistics();
         
         for (Transaction transaction : history) {
-            TransactionType type = transaction.getType();
-            double amount = transaction.getAmount();
-            
-            switch (type) {
+            switch (transaction.getType()) {
                 case DEPOSIT:
-                    stats.totalDeposits += amount;
+                    stats.totalDeposits += transaction.getAmount();
                     stats.depositCount++;
-                    
-                    // Update largest deposit
-                    if (stats.largestDeposit == null || amount > stats.largestDeposit.getAmount()) {
+                    if (stats.largestDeposit == null || transaction.getAmount() > stats.largestDeposit.getAmount()) {
                         stats.largestDeposit = transaction;
                     }
                     break;
                     
                 case WITHDRAWAL:
-                    stats.totalWithdrawals += amount;
+                    stats.totalWithdrawals += transaction.getAmount();
                     stats.withdrawalCount++;
-                    
-                    // Update largest withdrawal
-                    if (stats.largestWithdrawal == null || amount > stats.largestWithdrawal.getAmount()) {
+                    if (stats.largestWithdrawal == null || transaction.getAmount() > stats.largestWithdrawal.getAmount()) {
                         stats.largestWithdrawal = transaction;
                     }
                     break;
                     
                 case TRANSFER:
-                    stats.totalTransfers += amount;
+                    stats.totalTransfers += transaction.getAmount();
                     stats.transferCount++;
                     break;
                     
@@ -550,8 +554,11 @@ public class Menu {
                     stats.failedCount++;
                     break;
                     
-                default:
-                    // Ignore other transaction types for analysis
+                case SCHEDULED:
+                case ADMIN:
+                case LIMIT_CHANGE:
+                case RECURRING_PAYMENT:
+                    // These transaction types are not included in statistics
                     break;
             }
         }
@@ -566,20 +573,13 @@ public class Menu {
      * @param totalTransactions Total number of transactions
      */
     private void displayTransactionSummary(TransactionStatistics stats, int totalTransactions) {
-        System.out.println("\n========== TRANSACTION ANALYSIS REPORT ==========");
-        System.out.println("\nTRANSACTION SUMMARY:");
-        System.out.printf("Total Transactions: %d\n", totalTransactions);
-        
-        if (totalTransactions > 0) {
-            System.out.printf("Deposits: %d (%.2f%%)\n", stats.depositCount, 
-                    (double)stats.depositCount / totalTransactions * 100);
-            System.out.printf("Withdrawals: %d (%.2f%%)\n", stats.withdrawalCount, 
-                    (double)stats.withdrawalCount / totalTransactions * 100);
-            System.out.printf("Transfers: %d (%.2f%%)\n", stats.transferCount, 
-                    (double)stats.transferCount / totalTransactions * 100);
-            System.out.printf("Failed Transactions: %d (%.2f%%)\n", stats.failedCount, 
-                    (double)stats.failedCount / totalTransactions * 100);
-        }
+        System.out.println("Transaction Count Summary:");
+        System.out.println("-------------------------");
+        System.out.printf("Total Transactions: %d%n", totalTransactions);
+        System.out.printf("Deposits: %d%n", stats.depositCount);
+        System.out.printf("Withdrawals: %d%n", stats.withdrawalCount);
+        System.out.printf("Transfers: %d%n", stats.transferCount);
+        System.out.printf("Failed Transactions: %d%n", stats.failedCount);
     }
     
     /**
@@ -588,11 +588,12 @@ public class Menu {
      * @param stats The transaction statistics
      */
     private void displayFinancialSummary(TransactionStatistics stats) {
-        System.out.println("\nFINANCIAL SUMMARY:");
-        System.out.printf("Total Deposits: $%.2f\n", stats.totalDeposits);
-        System.out.printf("Total Withdrawals: $%.2f\n", stats.totalWithdrawals);
-        System.out.printf("Total Transfers: $%.2f\n", stats.totalTransfers);
-        System.out.printf("Net Cash Flow: $%.2f\n", stats.totalDeposits - stats.totalWithdrawals);
+        System.out.println("Financial Summary:");
+        System.out.println("-----------------");
+        System.out.printf("Total Deposits: $%.2f%n", stats.totalDeposits);
+        System.out.printf("Total Withdrawals: $%.2f%n", stats.totalWithdrawals);
+        System.out.printf("Total Transfers: $%.2f%n", stats.totalTransfers);
+        System.out.printf("Net Flow: $%.2f%n", stats.totalDeposits - stats.totalWithdrawals - stats.totalTransfers);
     }
     
     /**
@@ -601,12 +602,17 @@ public class Menu {
      * @param stats The transaction statistics
      */
     private void displayTransactionAverages(TransactionStatistics stats) {
-        double avgDeposit = stats.depositCount > 0 ? stats.totalDeposits / stats.depositCount : 0;
-        double avgWithdrawal = stats.withdrawalCount > 0 ? stats.totalWithdrawals / stats.withdrawalCount : 0;
-        
-        System.out.println("\nAVERAGES:");
-        System.out.printf("Average Deposit: $%.2f\n", avgDeposit);
-        System.out.printf("Average Withdrawal: $%.2f\n", avgWithdrawal);
+        System.out.println("Transaction Averages:");
+        System.out.println("--------------------");
+        if (stats.depositCount > 0) {
+            System.out.printf("Average Deposit: $%.2f%n", stats.totalDeposits / stats.depositCount);
+        }
+        if (stats.withdrawalCount > 0) {
+            System.out.printf("Average Withdrawal: $%.2f%n", stats.totalWithdrawals / stats.withdrawalCount);
+        }
+        if (stats.transferCount > 0) {
+            System.out.printf("Average Transfer: $%.2f%n", stats.totalTransfers / stats.transferCount);
+        }
     }
     
     /**
@@ -615,22 +621,17 @@ public class Menu {
      * @param stats The transaction statistics
      */
     private void displayLargestTransactions(TransactionStatistics stats) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        
-        if (stats.largestDeposit != null || stats.largestWithdrawal != null) {
-            System.out.println("\nLARGEST TRANSACTIONS:");
-            
-            if (stats.largestDeposit != null) {
-                System.out.printf("Largest Deposit: $%.2f on %s\n", 
-                        stats.largestDeposit.getAmount(), 
-                        dateFormat.format(stats.largestDeposit.getDate()));
-            }
-            
-            if (stats.largestWithdrawal != null) {
-                System.out.printf("Largest Withdrawal: $%.2f on %s\n", 
-                        stats.largestWithdrawal.getAmount(), 
-                        dateFormat.format(stats.largestWithdrawal.getDate()));
-            }
+        System.out.println("Largest Transactions:");
+        System.out.println("--------------------");
+        if (stats.largestDeposit != null) {
+            System.out.printf("Largest Deposit: $%.2f on %s%n",
+                stats.largestDeposit.getAmount(),
+                stats.largestDeposit.getDate());
+        }
+        if (stats.largestWithdrawal != null) {
+            System.out.printf("Largest Withdrawal: $%.2f on %s%n",
+                stats.largestWithdrawal.getAmount(),
+                stats.largestWithdrawal.getDate());
         }
     }
     
@@ -640,73 +641,42 @@ public class Menu {
      * @param stats The transaction statistics
      */
     private void displayRecommendations(TransactionStatistics stats) {
-        System.out.println("\nRECOMMENDATIONS:");
+        System.out.println("Personalized Recommendations:");
+        System.out.println("--------------------------");
         
-        // Provide some basic financial advice based on the analysis
-        if (stats.totalWithdrawals > stats.totalDeposits) {
-            System.out.println("- Your withdrawals exceed your deposits. Consider reducing expenses or increasing income.");
-        } else if (stats.totalDeposits > stats.totalWithdrawals * 2) {
-            System.out.println("- You're saving well! Consider investing some of your savings for better returns.");
+        // Check for high failed transaction rate
+        double failedRate = stats.failedCount / (double) (stats.depositCount + stats.withdrawalCount + stats.transferCount + stats.failedCount);
+        if (failedRate > 0.1) { // More than 10% failed transactions
+            System.out.println("- Consider maintaining a higher balance to avoid failed transactions");
         }
         
-        if (stats.failedCount > 0) {
-            System.out.println("- You have " + stats.failedCount + " failed transactions. Review your spending habits to avoid insufficient funds.");
+        // Check for frequent small transactions
+        double avgWithdrawal = stats.withdrawalCount > 0 ? stats.totalWithdrawals / stats.withdrawalCount : 0;
+        if (stats.withdrawalCount > 10 && avgWithdrawal < 50) { // Many small withdrawals
+            System.out.println("- Consider consolidating smaller withdrawals to reduce transaction frequency");
         }
         
-        System.out.println("\n=================================================\n");
+        // Check for balance management
+        if (stats.totalWithdrawals > stats.totalDeposits * 0.9) { // Spending close to income
+            System.out.println("- Consider setting up a savings plan to maintain a higher balance");
+        }
+        
+        // Suggest account upgrade if high transaction volume
+        int totalTransactions = stats.depositCount + stats.withdrawalCount + stats.transferCount;
+        if (totalTransactions > 50) {
+            System.out.println("- You may benefit from upgrading to a premium account with higher transaction limits");
+        }
     }
     
-    /**
-     * Helper class to store transaction statistics during analysis.
-     */
-    private static class TransactionStatistics {
-        double totalDeposits = 0;
-        double totalWithdrawals = 0;
-        double totalTransfers = 0;
-        int depositCount = 0;
-        int withdrawalCount = 0;
-        int transferCount = 0;
-        int failedCount = 0;
-        Transaction largestDeposit = null;
-        Transaction largestWithdrawal = null;
-    }
-
-    private void confirmAndExitIfTestMode(String message) {
-        System.out.println(message);
-        if (System.getProperty("test.mode") != null) {
-            System.exit(0);
-        }
-    }
-
     /**
      * Displays the account holder's personal information.
      */
     private void viewPersonalInfo() {
-        if (currentAccountHolder == null) {
+        if (currentAccountHolder != null) {
+            System.out.println("\nPersonal Information:");
+            System.out.println(currentAccountHolder.getPersonalInfo("default123")); // Use default password
+        } else {
             System.out.println("No account holder information available.");
-            return;
-        }
-
-        System.out.println("\n--- Personal Information ---");
-        
-        // Always require password for personal info
-        System.out.print("Enter password to view personal information: ");
-        String password = scanner.nextLine();
-        
-        String info = currentAccountHolder.getPersonalInfo(password);
-        if (info == null) {
-            System.out.println("Incorrect password. Access denied.");
-            return;
-        }
-        
-        System.out.println("\nPersonal Information:");
-        System.out.println(info);
-        
-        // Offer to change password
-        System.out.print("\nWould you like to change your password? (y/n): ");
-        String changePassword = scanner.nextLine().toLowerCase();
-        if (changePassword.equals("y")) {
-            changePassword();
         }
     }
     
@@ -714,155 +684,155 @@ public class Menu {
      * Allows the user to change their password.
      */
     private void changePassword() {
+        if (currentAccountHolder == null) {
+            System.out.println("No account holder selected.");
+            return;
+        }
+        
         System.out.print("Enter current password: ");
         String currentPassword = scanner.nextLine();
         
-        // Verify current password
         if (!currentAccountHolder.showPersonalInfo(currentPassword)) {
-            System.out.println("Incorrect current password. Password change failed.");
+            System.out.println("Incorrect password.");
             return;
         }
         
         System.out.print("Enter new password: ");
         String newPassword = scanner.nextLine();
         
-        // Set new password and hide personal info again
         currentAccountHolder.setPassword(newPassword);
-        currentAccountHolder.hidePersonalInfo();
-        
-        System.out.println("Password changed successfully!");
+        System.out.println("Password changed successfully.");
     }
-
+    
     private void manageRecurringPayments() {
-        while (true) {
-            System.out.println("\nRecurring Payments Menu:");
-            System.out.println("1. View Active Recurring Payments");
-            System.out.println("2. Schedule New Recurring Payment");
-            System.out.println("3. Cancel Recurring Payment");
-            System.out.println("4. Process Due Payments");
-            System.out.println("5. Return to Main Menu");
-            System.out.print("Enter your choice (1-5): ");
-
-            int choice = getIntInput();
-
-            switch (choice) {
-                case 1:
-                    viewRecurringPayments();
-                    break;
-                case 2:
-                    scheduleNewRecurringPayment();
-                    break;
-                case 3:
-                    cancelRecurringPayment();
-                    break;
-                case 4:
-                    processDuePayments();
-                    break;
-                case 5:
-                    return;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-            }
+        if (!accountExists()) return;
+        
+        System.out.println("\nRecurring Payments Menu:");
+        System.out.println("1. View Recurring Payments");
+        System.out.println("2. Schedule New Payment");
+        System.out.println("3. Cancel Payment");
+        System.out.println("4. Process Due Payments");
+        System.out.println("5. Return to Main Menu");
+        System.out.print("Enter your choice (1-5): ");
+        
+        int choice = getIntInput();
+        switch (choice) {
+            case 1:
+                viewRecurringPayments();
+                break;
+            case 2:
+                scheduleNewRecurringPayment();
+                break;
+            case 3:
+                cancelRecurringPayment();
+                break;
+            case 4:
+                processDuePayments();
+                break;
+            case 5:
+                return;
+            default:
+                System.out.println("Invalid choice. Please try again.");
         }
     }
-
+    
     private void viewRecurringPayments() {
         List<RecurringPayment> payments = currentAccount.getRecurringPayments();
         if (payments.isEmpty()) {
             System.out.println("No recurring payments scheduled.");
             return;
         }
-
-        System.out.println("\nActive Recurring Payments:");
-        for (int i = 0; i < payments.size(); i++) {
-            RecurringPayment payment = payments.get(i);
-            if (payment.isActive()) {
-                System.out.printf("%d. Amount: $%.2f, Description: %s, Frequency: %s, Next Payment: %s%n",
-                    i + 1,
-                    payment.getAmount(),
-                    payment.getDescription(),
-                    payment.getFrequency(),
-                    new SimpleDateFormat("yyyy-MM-dd").format(payment.getNextPaymentDate()));
-            }
+        
+        System.out.println("\nRecurring Payments:");
+        System.out.println("------------------");
+        for (RecurringPayment payment : payments) {
+            System.out.printf("%s - $%.2f (%s)%n",
+                payment.getDescription(),
+                payment.getAmount(),
+                payment.isActive() ? "Active" : "Inactive");
+            System.out.printf("Next payment date: %s%n", payment.getNextPaymentDate());
+            System.out.println();
         }
     }
-
+    
     private void scheduleNewRecurringPayment() {
-        System.out.print("Enter payment amount: $");
+        System.out.print("Enter payment amount: ");
         double amount = getDoubleInput();
-
+        
         System.out.print("Enter payment description: ");
         String description = scanner.nextLine();
-
-        System.out.print("Enter start date (YYYY-MM-DD): ");
-        Date startDate;
-        try {
-            startDate = new SimpleDateFormat("yyyy-MM-dd").parse(scanner.nextLine());
-        } catch (Exception e) {
-            System.out.println("Invalid date format. Please use YYYY-MM-DD.");
-            return;
-        }
-
-        System.out.println("Select payment frequency:");
-        System.out.println("1. Daily");
-        System.out.println("2. Weekly");
-        System.out.println("3. Monthly");
-        System.out.println("4. Yearly");
-        System.out.print("Enter your choice (1-4): ");
         
+        System.out.println("\nSelect payment frequency:");
+        System.out.println("1. Weekly");
+        System.out.println("2. Monthly");
+        System.out.println("3. Yearly");
+        System.out.print("Enter your choice (1-3): ");
+        
+        int frequencyChoice = getIntInput();
         RecurringPayment.PaymentFrequency frequency;
-        switch (getIntInput()) {
+        
+        switch (frequencyChoice) {
             case 1:
-                frequency = RecurringPayment.PaymentFrequency.DAILY;
-                break;
-            case 2:
                 frequency = RecurringPayment.PaymentFrequency.WEEKLY;
                 break;
-            case 3:
+            case 2:
                 frequency = RecurringPayment.PaymentFrequency.MONTHLY;
                 break;
-            case 4:
+            case 3:
                 frequency = RecurringPayment.PaymentFrequency.YEARLY;
                 break;
             default:
                 System.out.println("Invalid frequency choice.");
                 return;
         }
-
+        
         System.out.print("Enter recipient account ID: ");
         String recipientId = scanner.nextLine();
-
+        
         try {
-            currentAccount.scheduleRecurringPayment(amount, description, startDate, frequency, recipientId);
+            Date startDate = new Date(); // Start from today
+            RecurringPayment payment = currentAccount.scheduleRecurringPayment(
+                amount, description, startDate, frequency, recipientId);
+            
             System.out.println("Recurring payment scheduled successfully!");
+            System.out.printf("First payment of $%.2f will be on: %s%n",
+                payment.getAmount(), payment.getNextPaymentDate());
         } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error scheduling payment: " + e.getMessage());
         }
     }
-
+    
     private void cancelRecurringPayment() {
         List<RecurringPayment> payments = currentAccount.getRecurringPayments();
         if (payments.isEmpty()) {
             System.out.println("No recurring payments to cancel.");
             return;
         }
-
-        viewRecurringPayments();
-        System.out.print("Enter the number of the payment to cancel: ");
+        
+        System.out.println("\nSelect payment to cancel:");
+        for (int i = 0; i < payments.size(); i++) {
+            RecurringPayment payment = payments.get(i);
+            System.out.printf("%d. %s - $%.2f%n",
+                i + 1,
+                payment.getDescription(),
+                payment.getAmount());
+        }
+        
+        System.out.print("Enter payment number to cancel (1-" + payments.size() + "): ");
         int choice = getIntInput();
-
+        
         if (choice < 1 || choice > payments.size()) {
-            System.out.println("Invalid payment number.");
+            System.out.println("Invalid choice.");
             return;
         }
-
-        RecurringPayment payment = payments.get(choice - 1);
-        currentAccount.cancelRecurringPayment(payment);
-        System.out.println("Recurring payment cancelled successfully!");
+        
+        RecurringPayment selectedPayment = payments.get(choice - 1);
+        currentAccount.cancelRecurringPayment(selectedPayment);
+        System.out.println("Payment cancelled successfully.");
     }
-
+    
     private void processDuePayments() {
         int processed = currentAccount.processRecurringPayments();
-        System.out.printf("Processed %d recurring payment(s).%n", processed);
+        System.out.printf("%d payment(s) processed.%n", processed);
     }
 }
