@@ -1,8 +1,11 @@
 package bankingapp;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * Represents a bank account with basic operations.
@@ -26,6 +29,9 @@ public class BankAccount {
 
     // Transaction history
     private List<Transaction> transactionHistory;
+    
+    // Recurring payments
+    private List<RecurringPayment> recurringPayments;
 
     /**
      * Constructs a new bank account with an initial balance of 0.
@@ -35,6 +41,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
     }
 
     /**
@@ -60,6 +67,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -96,6 +104,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
         this.transactionHistory = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -201,9 +210,21 @@ public class BankAccount {
      * 
      * @param amount The amount of money to withdraw
      * @return true if the withdrawal was successful
-     * @throws IllegalArgumentException if the withdrawal amount is negative, exceeds the maximum withdrawal limit, or if there are insufficient funds
+     * @throws IllegalArgumentException if the amount is negative or exceeds withdrawal limits
      */
-    public boolean withdraw(double amount) {
+    public synchronized boolean withdraw(double amount) {
+        return withdraw(amount, true); // Default to recording the transaction
+    }
+
+    /**
+     * Withdraws a specified amount from the account, optionally recording the transaction.
+     * 
+     * @param amount The amount to withdraw.
+     * @param recordTransaction If true, record a standard withdrawal transaction.
+     * @return true if the withdrawal was successful
+     * @throws IllegalArgumentException if the amount is negative or exceeds withdrawal limits.
+     */
+    public synchronized boolean withdraw(double amount, boolean recordTransaction) {
         if (amount < 0) {
             throw new IllegalArgumentException("Withdrawal amount cannot be negative");
         }
@@ -213,12 +234,16 @@ public class BankAccount {
         }
         
         if (amount > this.balance) {
-            recordTransaction(TransactionType.FAILED, amount, "Failed withdrawal - Insufficient funds");
-            throw new IllegalArgumentException("Insufficient funds");
+            if (recordTransaction) {
+                recordTransaction(TransactionType.FAILED, amount, "Failed withdrawal - Insufficient funds");
+            }
+            return false;
         }
         
         this.balance -= amount;
-        recordTransaction(TransactionType.WITHDRAWAL, amount, "Withdrawal");
+        if (recordTransaction) {
+            recordTransaction(TransactionType.WITHDRAWAL, amount, "Withdrawal");
+        }
         return true;
     }
 
@@ -228,34 +253,53 @@ public class BankAccount {
      * @param destinationAccount The account to transfer funds to
      * @param amount The amount to transfer
      * @return true if transfer was successful
-     * @throws IllegalArgumentException if amount is negative, destination is null, or if there are insufficient funds
+     * @throws IllegalArgumentException if amount is negative, destination is null, or exceeds withdrawal limit
      */
-    public boolean transfer(BankAccount destinationAccount, double amount) {
-        if (destinationAccount == null) {
-            throw new IllegalArgumentException("Destination account cannot be null");
-        }
-
+    public synchronized boolean transfer(BankAccount destinationAccount, double amount) {
         if (amount < 0) {
             throw new IllegalArgumentException("Transfer amount cannot be negative");
         }
+        if (destinationAccount == null) {
+            throw new IllegalArgumentException("Destination account cannot be null");
+        }
+        if (this == destinationAccount) {
+            throw new IllegalArgumentException("Source and destination accounts cannot be the same");
+        }
 
-        try {
-            if (this.withdraw(amount)) {
-                try {
-                    destinationAccount.deposit(amount);
-                    recordTransaction(TransactionType.TRANSFER, amount, "Transfer to account " + destinationAccount.hashCode());
-                    return true;
-                } catch (IllegalArgumentException e) {
-                    // If deposit fails, revert the withdrawal
-                    this.balance += amount;
-                    recordTransaction(TransactionType.FAILED, amount, "Failed transfer - " + e.getMessage());
-                    throw e;
-                }
-            }
+        // Check withdrawal limit before attempting the withdrawal part of the transfer
+        if (amount > maxWithdrawalLimit) {
+            recordTransaction(TransactionType.FAILED, amount, "Transfer failed: Exceeds withdrawal limit");
+            throw new IllegalArgumentException("Transfer amount " + amount + " exceeds withdrawal limit of " + maxWithdrawalLimit);
+        }
+
+        // Withdraw from source (this account)
+        if (!withdraw(amount, false)) {
+            // If withdrawal fails due to insufficient funds
+            recordTransaction(TransactionType.FAILED, amount, "Transfer failed: Insufficient funds");
             return false;
-        } catch (IllegalArgumentException e) {
-            recordTransaction(TransactionType.FAILED, amount, "Failed transfer - " + e.getMessage());
-            throw e;
+        }
+        
+        // Record the withdrawal part of the transfer
+        recordTransaction(TransactionType.WITHDRAWAL, amount, "Withdrawal for transfer");
+        
+        // Deposit into destination
+        try {
+            destinationAccount.deposit(amount); // This will record its own deposit transaction
+            // Record successful transfer transaction in this account's history
+            recordTransaction(TransactionType.TRANSFER, amount, "Transfer to account " + destinationAccount.hashCode());
+            return true;
+        } catch (IllegalArgumentException depositError) {
+            // If deposit fails (e.g., exceeds destination's deposit limit), we need to refund the source account
+            System.err.println("Transfer failed during deposit phase: " + depositError.getMessage() + ". Refunding source account.");
+            try {
+                deposit(amount); // Refund the source account
+                recordTransaction(TransactionType.FAILED, amount, "Transfer failed: Destination rejected deposit. Refunded.");
+            } catch (IllegalArgumentException refundError) {
+                // This should ideally not happen if the deposit limit wasn't violated by the refund
+                System.err.println("CRITICAL ERROR: Failed to refund source account after failed transfer deposit. Amount: " + amount + ". Error: " + refundError.getMessage());
+            }
+            // Re-throw the original deposit error to indicate the transfer failure
+            throw depositError; 
         }
     }
 
@@ -305,11 +349,104 @@ public class BankAccount {
     }
 
     /**
-     * Returns the type of account.
+     * Adds a new recurring payment to this account.
      * 
-     * @return The account type (CHECKING or SAVINGS).
+     * @param amount The amount to be paid.
+     * @param description Description of the payment.
+     * @param startDate When the payments should start.
+     * @param frequency How often the payment should occur.
+     * @param recipientAccountId The account ID to send payment to.
+     * @return The created RecurringPayment object.
+     * @throws IllegalArgumentException if amount is invalid or exceeds limits.
      */
-    public AccountType getAccountType() {
-        return this.accountType;
+    public RecurringPayment scheduleRecurringPayment(double amount, String description, 
+            Date startDate, RecurringPayment.PaymentFrequency frequency, String recipientAccountId) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Payment amount must be positive");
+        }
+        if (amount > maxWithdrawalLimit) {
+            throw new IllegalArgumentException("Payment amount exceeds withdrawal limit");
+        }
+        
+        RecurringPayment payment = new RecurringPayment(amount, description, startDate, 
+                                                       frequency, recipientAccountId, this);
+        recurringPayments.add(payment);
+        return payment;
+    }
+
+    // Utility method to get the current Calendar instance for tests or real time
+    private Calendar getCurrentCalendar() {
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT-5")); // Use GMT-5
+        String testTime = System.getProperty("test.current.time");
+        if (testTime != null && !testTime.trim().isEmpty()) {
+            try {
+                cal.setTimeInMillis(Long.parseLong(testTime));
+            } catch (NumberFormatException e) {
+                System.err.println("[BankAccount] WARN: Could not parse test time property '" + testTime + "'. Using real time.");
+                // Fall through to use real time
+            }
+        } // Otherwise, use real time by default
+
+        // Set to midnight for consistent date comparisons
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal;
+    }
+
+    public void cancelRecurringPayment(RecurringPayment payment) {
+        if (recurringPayments.contains(payment)) {
+            payment.setActive(false);
+        } else {
+            System.out.println("Payment not found in scheduled list.");
+        }
+    }
+
+    public List<RecurringPayment> getRecurringPayments() {
+        return new ArrayList<>(recurringPayments); // Return a copy
+    }
+
+    // Processes all active recurring payments that are due
+    public int processRecurringPayments() {
+        int paymentsProcessed = 0;
+        // Get the current time (respecting test property) ONCE for this processing run
+        Calendar now = getCurrentCalendar(); 
+        System.out.println("[ProcessRecurringPayments] Processing with 'now' = " + now.getTime()); // Optional: Debugging
+
+        // Iterate using an iterator to allow removal during iteration if needed (though not strictly necessary here as we only deactivate)
+        Iterator<RecurringPayment> iterator = recurringPayments.iterator();
+        while (iterator.hasNext()) {
+            RecurringPayment payment = iterator.next();
+            System.out.println("[ProcessRecurringPayments] Checking payment: " + payment.getDescription() + ", Active: " + payment.isActive()); // Optional: Debugging
+
+            // Pass 'now' to isPaymentDue
+            if (payment.isActive() && payment.isPaymentDue(now)) { 
+                System.out.println("[ProcessRecurringPayments] Payment DUE: " + payment.getDescription() + ", Amount: " + payment.getAmount()); // Optional: Debugging
+                try {
+                    // Withdraw without recording a 'Withdrawal' transaction here
+                    boolean withdrawalSuccess = withdraw(payment.getAmount(), false);
+                    if (withdrawalSuccess) {
+                        // Explicitly record as a RECURRING_PAYMENT
+                        recordTransaction(TransactionType.RECURRING_PAYMENT, payment.getAmount(), "Recurring payment: " + payment.getDescription());
+                        System.out.println("[ProcessRecurringPayments] Payment SUCCESS: " + payment.getDescription()); // Optional: Debugging
+                        // Pass 'now' to updateNextPaymentDate
+                        payment.updateNextPaymentDate(now); 
+                        System.out.println("[ProcessRecurringPayments] Updated next payment date for " + payment.getDescription() + " to: " + payment.getNextPaymentDate()); // Optional: Debugging
+                        paymentsProcessed++;
+                    } else {
+                        // Log the error but continue processing others
+                        // Record failed payment transaction
+                        recordTransaction(TransactionType.FAILED, payment.getAmount(), "Failed recurring payment '" + payment.getDescription() + "': Insufficient funds");
+                        System.err.println("Insufficient funds for recurring payment '" + payment.getDescription() + "'");
+                    }
+                } catch (Exception e) { // Catch other potential exceptions during withdrawal
+                    // Record failed payment transaction
+                    recordTransaction(TransactionType.FAILED, payment.getAmount(), "Failed recurring payment '" + payment.getDescription() + "': " + e.getMessage());
+                    System.err.println("Error processing recurring payment '" + payment.getDescription() + "': " + e.getMessage());
+                }
+            }
+        }
+        return paymentsProcessed;
     }
 }

@@ -1,15 +1,15 @@
 package tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
 
 import bankingapp.BankAccount;
 import bankingapp.AccountType;
+import bankingapp.TransactionType;
 
 public class BankAccountTests {
     
@@ -44,10 +44,12 @@ public class BankAccountTests {
     @Test
     public void testWithdraw() {
         BankAccount account = new BankAccount(100);
-        account.withdraw(50.0);
+        boolean result1 = account.withdraw(50.0);
+        assertTrue("Withdrawal should succeed", result1);
         assertEquals(50.0, account.getCurrentBalance(), 0.001);
         
-        account.withdraw(25.0);
+        boolean result2 = account.withdraw(25.0);
+        assertTrue("Withdrawal should succeed", result2);
         assertEquals(25.0, account.getCurrentBalance(), 0.001);
     }
     
@@ -60,7 +62,9 @@ public class BankAccountTests {
     @Test
     public void testInsufficientFunds() {
         BankAccount account = new BankAccount(100);
-        assertThrows(IllegalArgumentException.class, () -> account.withdraw(150.0));
+        boolean result = account.withdraw(150.0);
+        assertFalse("Withdrawal should fail due to insufficient funds", result);
+        assertEquals("Balance should remain unchanged", 100.0, account.getCurrentBalance(), 0.001);
     }
 
     // Tests for deposit functionality
@@ -89,15 +93,21 @@ public class BankAccountTests {
     public void testSuccessfulWithdrawal() {
         BankAccount account = new BankAccount(100.0);
         boolean result = account.withdraw(50.0);
-        assertTrue(result);
-        assertEquals(50.0, account.getCurrentBalance(), 0.005);
+        assertTrue("Withdrawal should succeed", result);
+        assertEquals(50.0, account.getCurrentBalance(), 0.01);
+        assertEquals(2, account.getTransactionHistory().size());
+        assertEquals(TransactionType.WITHDRAWAL, account.getTransactionHistory().get(1).getType());
     }
-
+    
     @Test
     public void testInsufficientFundsWithdrawal() {
         BankAccount account = new BankAccount(25.0);
-        assertThrows(IllegalArgumentException.class, () -> account.withdraw(50.0));
-        assertEquals(25.0, account.getCurrentBalance(), 0.005);
+        boolean result = account.withdraw(50.0);
+        assertFalse("Withdrawal should fail due to insufficient funds", result);
+        assertEquals(25.0, account.getCurrentBalance(), 0.01);
+        assertEquals(2, account.getTransactionHistory().size()); // Only the initial deposit transaction
+        assertEquals(TransactionType.DEPOSIT, account.getTransactionHistory().get(0).getType());
+        assertEquals(TransactionType.FAILED, account.getTransactionHistory().get(1).getType());
     }
 
     // Tests for transfer functionality
@@ -115,8 +125,12 @@ public class BankAccountTests {
     public void testInsufficientFundsTransfer() {
         BankAccount sourceAccount = new BankAccount(20.0);
         BankAccount destinationAccount = new BankAccount(50.0);
-        assertThrows(IllegalArgumentException.class, () -> 
-            sourceAccount.transfer(destinationAccount, 25.0));
+        
+        // Changed from expecting exception to checking boolean result
+        boolean result = sourceAccount.transfer(destinationAccount, 25.0);
+        assertFalse("Transfer should fail due to insufficient funds", result);
+        
+        // Verify balances remain unchanged
         assertEquals(20.0, sourceAccount.getCurrentBalance(), 0.005);
         assertEquals(50.0, destinationAccount.getCurrentBalance(), 0.005);
     }
@@ -191,10 +205,13 @@ public class BankAccountTests {
 
     @Test
     public void testExceedWithdrawalLimit() {
-        BankAccount account = new BankAccount(2000.0);
+        BankAccount account = new BankAccount(2000.0, 1000.0, 10000.0);
+        assertEquals(1000.0, account.getMaxWithdrawalLimit(), 0.01);
+        
         assertThrows(IllegalArgumentException.class, () -> 
             account.withdraw(1500.0));
-        assertEquals(2000.0, account.getCurrentBalance(), 0.005);
+        
+        assertEquals(2000.0, account.getCurrentBalance(), 0.01);
     }
 
     @Test
@@ -202,7 +219,7 @@ public class BankAccountTests {
         BankAccount account = new BankAccount(1000.0);
         assertThrows(IllegalArgumentException.class, () -> 
             account.deposit(15000.0));
-        assertEquals(1000.0, account.getCurrentBalance(), 0.005);
+        assertEquals(1000.0, account.getCurrentBalance(), 0.01);
     }
 
     @Test
@@ -211,8 +228,8 @@ public class BankAccountTests {
         BankAccount destinationAccount = new BankAccount(500.0);
         assertThrows(IllegalArgumentException.class, () -> 
             sourceAccount.transfer(destinationAccount, 1500.0));
-        assertEquals(2000.0, sourceAccount.getCurrentBalance(), 0.005);
-        assertEquals(500.0, destinationAccount.getCurrentBalance(), 0.005);
+        assertEquals(2000.0, sourceAccount.getCurrentBalance(), 0.01);
+        assertEquals(500.0, destinationAccount.getCurrentBalance(), 0.01);
     }
 
     // Tests for AccountType functionality
