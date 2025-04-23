@@ -400,8 +400,17 @@ public class BankAccount {
         String testTime = System.getProperty("test.current.time");
         if (testTime != null && !testTime.trim().isEmpty()) {
             try {
-                cal.setTimeInMillis(Long.parseLong(testTime));
-            } catch (NumberFormatException e) {
+                // Try both millis and ISO string
+                if (testTime.matches("\\d+")) {
+                    cal.setTimeInMillis(Long.parseLong(testTime));
+                } else {
+                    // Try ISO_LOCAL_DATE_TIME
+                    java.time.LocalDateTime ldt = java.time.LocalDateTime.parse(testTime);
+                    java.time.ZoneId zone = java.time.ZoneId.of("America/Chicago");
+                    java.time.ZonedDateTime zdt = ldt.atZone(zone);
+                    cal.setTime(java.util.Date.from(zdt.toInstant()));
+                }
+            } catch (Exception e) {
                 System.err.println("[BankAccount] WARN: Could not parse test time property '" + testTime + "'. Using real time.");
                 // Fall through to use real time
             }
