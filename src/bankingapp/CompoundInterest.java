@@ -9,7 +9,6 @@ public class CompoundInterest implements Runnable {
     private final BankAccountDatabase bankAccounts;
     private final long intervalMillis;
     private static final double INTEREST_RATE = 0.20; // 20% interest rate
-    private static volatile boolean interestAppliedForTest = false;
 
     public CompoundInterest(BankAccountDatabase bankAccounts, long intervalMillis) {
         this.bankAccounts = bankAccounts;
@@ -18,11 +17,13 @@ public class CompoundInterest implements Runnable {
 
     @Override
     public void run() {
+        boolean testModeApplied = false;
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 applyInterestToSavingsAccounts();
                 // Only apply once per test (fix double application)
-                if (System.getProperty("test.mode") != null) {
+                if (System.getProperty("test.mode") != null && !testModeApplied) {
+                    testModeApplied = true;
                     break;
                 }
                 Thread.sleep(intervalMillis);
@@ -56,10 +57,5 @@ public class CompoundInterest implements Runnable {
         } finally {
             System.clearProperty("test.mode");
         }
-    }
-
-    // Reset static flag before each test run
-    public static void resetTestInterestFlag() {
-        interestAppliedForTest = false;
     }
 }

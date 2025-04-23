@@ -53,7 +53,7 @@ public class MenuTests {
         menu.showMainMenu();
         
         String output = outputStream.toString();
-        assertTrue("Should confirm deposit", output.contains("successfully deposited"));
+        assertTrue("Should confirm deposit", output.contains("Successfully deposited $500.00"));
     }
 
     @Test
@@ -65,7 +65,7 @@ public class MenuTests {
         menu.showMainMenu();
         
         String output = outputStream.toString();
-        assertTrue("Should confirm withdrawal", output.contains("successfully withdrawn"));
+        assertTrue("Should confirm withdrawal", output.contains("Successfully withdrew $200.00"));
     }
 
     @Test
