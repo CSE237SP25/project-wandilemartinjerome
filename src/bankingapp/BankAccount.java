@@ -379,7 +379,13 @@ public class BankAccount {
     }
 
     // Utility method to get the current Calendar instance for tests or real time
-    private Calendar getCurrentCalendar() {
+    /**
+     * Utility method to get the current Calendar instance for tests or real time.
+     * Public access to allow testing from other packages.
+     * 
+     * @return A Calendar instance set to the current time or test time if specified
+     */
+    public Calendar getCurrentCalendar() {
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT-5")); // Use GMT-5
         String testTime = System.getProperty("test.current.time");
         if (testTime != null && !testTime.trim().isEmpty()) {
