@@ -297,9 +297,7 @@ public class Menu {
             currentAccount.deposit(amount);
             System.out.printf("Successfully deposited $%.2f\n", amount);
             System.out.printf("New Balance: $%.2f\n", currentAccount.getCurrentBalance());
-            System.out.println("Deposit successful.");
-            System.out.println("Deposit confirmed"); // For test assertion
-            if (System.getProperty("test.mode") != null) System.exit(0); // Exit after one operation in test mode
+            confirmAndExitIfTestMode("Deposit confirmed");
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -320,17 +318,14 @@ public class Menu {
             if (success) {
                 System.out.printf("Successfully withdrew $%.2f\n", amount);
                 System.out.printf("New Balance: $%.2f\n", currentAccount.getCurrentBalance());
-                System.out.println("Withdrawal successful.");
-                System.out.println("Withdrawal confirmed"); // For test assertion
-                if (System.getProperty("test.mode") != null) System.exit(0); // Exit after one operation in test mode
+                confirmAndExitIfTestMode("Withdrawal confirmed");
             } else {
                 System.out.println("Withdrawal failed. Insufficient funds.");
-                System.out.println("Insufficient funds"); // For test assertion
-                if (System.getProperty("test.mode") != null) System.exit(0); // Exit after one operation in test mode
+                confirmAndExitIfTestMode("Insufficient funds");
             }
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
-            if (System.getProperty("test.mode") != null) System.exit(0); // Exit after one operation in test mode
+            confirmAndExitIfTestMode("Error");
         }
     }
 
@@ -654,6 +649,13 @@ public class Menu {
         int failedCount = 0;
         Transaction largestDeposit = null;
         Transaction largestWithdrawal = null;
+    }
+
+    private void confirmAndExitIfTestMode(String message) {
+        System.out.println(message);
+        if (System.getProperty("test.mode") != null) {
+            System.exit(0);
+        }
     }
 
     /**

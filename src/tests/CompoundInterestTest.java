@@ -8,6 +8,7 @@ public class CompoundInterestTest  {
 
     @Test
     public void testCompoundInterestAppliedToSavings() throws InterruptedException {
+        CompoundInterest.resetTestInterestFlag();
         // Create the database and account
         BankAccountDatabase db = new BankAccountDatabase();
         BankAccount account = new BankAccount(1000.0, AccountType.SAVINGS);

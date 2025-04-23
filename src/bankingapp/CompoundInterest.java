@@ -43,7 +43,10 @@ public class CompoundInterest implements Runnable {
                     double balance = account.getCurrentBalance();
                     double interest = balance * INTEREST_RATE;
                     account.deposit(interest);
-                    System.out.println("Interest of " + interest + " added to account " + accountNumber);
+                    // Suppress interest messages and only print in non-test mode
+                    if (System.getProperty("test.mode") == null) {
+                        System.out.println("Interest of " + interest + " added to account " + accountNumber);
+                    }
                 }
             }
             // Only apply once per test (fix double application)
@@ -55,5 +58,10 @@ public class CompoundInterest implements Runnable {
         } finally {
             System.clearProperty("test.mode");
         }
+    }
+
+    // Reset static flag before each test run
+    public static void resetTestInterestFlag() {
+        interestAppliedForTest = false;
     }
 }
