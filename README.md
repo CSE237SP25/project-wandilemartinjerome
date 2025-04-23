@@ -10,18 +10,6 @@ Team Members:
 
 ## Completed User Stories
 
-### Transaction History and Reporting
-- Implemented transaction history tracking for each account
-- Added reporting features for transaction analysis
-- Created functionality to export account statements
-
-### Security Enhancements
-- Implemented robust authentication mechanisms
-- Added password protection for administrative functions
-- Implemented encryption for sensitive account data
-
-## Planned User Stories for Next Iteration
-
 ### Expand Account Types
 - Add support for Checking, Savings, and Business account types
 - Implement interest accrual for savings accounts
@@ -32,9 +20,14 @@ Team Members:
 - Add menu options for managing and canceling recurring transactions
 - Validate scheduled dates and ensured transactions execute at runtime triggers
 
+## Planned User Stories for Next Iteration
+
+N/A
+
 ## Implementation Challenges
 
-1. **Account Limits**: Override account limits method in AdminAccount needs to be implemented in the BankAccount class in order to be effective. 
+1. **Menu Tests**: Making sure exact formatting in the Menu class is catched by the Menu tests class.
+2. **Runtime Triggers**: Figuring out how to work with calendar features and threads.
    
 ## Compilation and Execution Instructions
 
@@ -53,17 +46,18 @@ chmod +x compile_and_run.sh
 
 ## Step 3: Using the Banking Application
 After running the application, you'll see a menu with these options:
-* Create a new account
-* Select account
-* Check Balance
-* Deposit Funds
-* Withdraw Funds
-* View Transaction History
-* Transaction Management
-* View Account Limits
-* View Personal Information
-* Change Password
-* Exit
+1. Create a new account
+2. Select account
+3. Check Balance
+4. Deposit Funds
+5. Withdraw Funds
+6. View Transaction History
+7. Transaction Management
+8. View Account Limits
+9. View Personal Information
+10. Change Password
+11. Manage Recurring Payments
+12. Exit
   
 Enter the number corresponding to your choice and follow the prompts.
 
