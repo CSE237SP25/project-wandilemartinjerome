@@ -42,21 +42,23 @@ public class BankAccount {
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
         this.recurringPayments = new ArrayList<>();
+        this.accountType = AccountType.CHECKING; // Default to checking account
     }
 
     /**
-     * Constructs a new bank account with an initial balance of 0 and a specified account type.
+     * Constructs a new bank account with the specified account type.
      * 
-     * @param accountType The type of account (CHECKING or SAVINGS).
+     * @param accountType The type of account (CHECKING, SAVINGS, etc.)
      */
     public BankAccount(AccountType accountType) {
         this.balance = 0;
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
         this.accountType = accountType;
     }
-
+    
     /**
      * Constructs a new bank account with the specified initial balance.
      * 
@@ -78,14 +80,16 @@ public class BankAccount {
      * Constructs a new bank account with the specified initial balance and account type.
      * 
      * @param initBalance The initial balance of the account.
-     * @param accountType The type of account (CHECKING or SAVINGS).
+     * @param accountType The type of account (CHECKING, SAVINGS, etc.)
      */
     public BankAccount(double initBalance, AccountType accountType) {
         this.balance = initBalance;
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.recurringPayments = new ArrayList<>();
         this.accountType = accountType;
+        
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -416,6 +420,24 @@ public class BankAccount {
         return new ArrayList<>(recurringPayments); // Return a copy
     }
 
+    /**
+     * Gets the account type.
+     * 
+     * @return The account type (CHECKING, SAVINGS, etc.)
+     */
+    public AccountType getAccountType() {
+        return accountType;
+    }
+    
+    /**
+     * Sets the account type.
+     * 
+     * @param accountType The account type to set
+     */
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
+    }
+    
     // Processes all active recurring payments that are due
     public int processRecurringPayments() {
         int paymentsProcessed = 0;

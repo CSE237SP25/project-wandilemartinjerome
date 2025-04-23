@@ -16,7 +16,6 @@ public class Menu {
     private Scanner scanner;
     private BankAccount currentAccount;
     private BankAccountDatabase accountDatabase;
-    private AdminAccount adminAccount;
     private AccountHolder currentAccountHolder;
     
     /**
@@ -26,7 +25,6 @@ public class Menu {
         scanner = new Scanner(System.in);
         currentAccount = new BankAccount(1000.0); // Default account with $1000
         accountDatabase = new BankAccountDatabase();
-        adminAccount = new AdminAccount();
         currentAccountHolder = new AccountHolder();
     }
     

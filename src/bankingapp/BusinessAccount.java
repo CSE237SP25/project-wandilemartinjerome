@@ -30,6 +30,27 @@ public class BusinessAccount extends BankAccount {
     }
     
     /**
+     * Constructs a new business account with an initial balance of 0 and specified account type.
+     * 
+     * @param accountType The type of account (CHECKING, SAVINGS, etc.)
+     */
+    public BusinessAccount(AccountType accountType) {
+        super(0, DEFAULT_BUSINESS_MAX_WITHDRAWAL, DEFAULT_BUSINESS_MAX_DEPOSIT);
+        setAccountType(accountType);
+    }
+    
+    /**
+     * Constructs a new business account with the specified initial balance and account type.
+     * 
+     * @param initBalance The initial balance of the account.
+     * @param accountType The type of account (CHECKING, SAVINGS, etc.)
+     */
+    public BusinessAccount(double initBalance, AccountType accountType) {
+        super(initBalance, DEFAULT_BUSINESS_MAX_WITHDRAWAL, DEFAULT_BUSINESS_MAX_DEPOSIT);
+        setAccountType(accountType);
+    }
+    
+    /**
      * Constructs a new business account with the specified initial balance and custom transaction limits.
      * 
      * @param initBalance The initial balance of the account.
@@ -38,6 +59,19 @@ public class BusinessAccount extends BankAccount {
      */
     public BusinessAccount(double initBalance, double maxWithdrawal, double maxDeposit) {
         super(initBalance, maxWithdrawal, maxDeposit);
+    }
+    
+    /**
+     * Constructs a new business account with the specified initial balance, custom transaction limits, and account type.
+     * 
+     * @param initBalance The initial balance of the account.
+     * @param maxWithdrawal The maximum withdrawal limit.
+     * @param maxDeposit The maximum deposit limit.
+     * @param accountType The type of account (CHECKING, SAVINGS, etc.)
+     */
+    public BusinessAccount(double initBalance, double maxWithdrawal, double maxDeposit, AccountType accountType) {
+        super(initBalance, maxWithdrawal, maxDeposit);
+        setAccountType(accountType);
     }
     
     /**

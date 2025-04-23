@@ -1,6 +1,5 @@
 package bankingapp;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 
 /**
@@ -136,12 +135,12 @@ public class AccountHolder {
 	}
 	
 	/**
-	 * Checks if the provided password is valid
+	 * Checks if the provided password is valid for this account.
 	 * 
-	 * @param inputPassword The password to check
+	 * @param inputPassword The password to validate
 	 * @return true if password is valid or not required, false otherwise
 	 */
-	private boolean isPasswordValid(String inputPassword) {
+	public boolean isPasswordValid(String inputPassword) {
 		// If personal info is hidden, always require password
 		if (isPersonalInfoHidden) {
 			// If no password is set, don't allow access
