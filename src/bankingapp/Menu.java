@@ -394,14 +394,23 @@ public class Menu {
      * @return The integer entered by the user
      */
     private int getIntInput() {
-        try {
-            return scanner.nextInt();
-        } catch (NoSuchElementException e) {
-            if (System.getProperty("test.mode") != null) {
-                System.out.println("[Test Mode] Input exhausted. Exiting.");
-                System.exit(0);
+        while (true) {
+            try {
+                String line = scanner.nextLine();
+                if (System.getProperty("test.mode") != null && (line == null || line.isEmpty())) {
+                    System.out.println("[Test Mode] Input exhausted. Exiting.");
+                    System.exit(0);
+                }
+                return Integer.parseInt(line.trim());
+            } catch (NoSuchElementException e) {
+                if (System.getProperty("test.mode") != null) {
+                    System.out.println("[Test Mode] Input exhausted. Exiting.");
+                    System.exit(0);
+                }
+                throw e;
+            } catch (NumberFormatException e) {
+                System.out.print("Invalid input. Please enter a number: ");
             }
-            throw e;
         }
     }
     
@@ -413,7 +422,18 @@ public class Menu {
     private double getDoubleInput() {
         while (true) {
             try {
-                return Double.parseDouble(scanner.nextLine());
+                String line = scanner.nextLine();
+                if (System.getProperty("test.mode") != null && (line == null || line.isEmpty())) {
+                    System.out.println("[Test Mode] Input exhausted. Exiting.");
+                    System.exit(0);
+                }
+                return Double.parseDouble(line.trim());
+            } catch (NoSuchElementException e) {
+                if (System.getProperty("test.mode") != null) {
+                    System.out.println("[Test Mode] Input exhausted. Exiting.");
+                    System.exit(0);
+                }
+                throw e;
             } catch (NumberFormatException e) {
                 System.out.print("Invalid input. Please enter a number: ");
             }
