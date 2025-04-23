@@ -53,7 +53,7 @@ public class MenuTests {
         menu.showMainMenu();
         
         String output = outputStream.toString();
-        assertTrue("Should confirm deposit", output.contains("Successfully deposited $500.00"));
+        assertTrue("Should confirm deposit", output.contains("Deposit successful. Your new balance is $500.00"));
     }
 
     @Test
@@ -65,7 +65,7 @@ public class MenuTests {
         menu.showMainMenu();
         
         String output = outputStream.toString();
-        assertTrue("Should confirm withdrawal", output.contains("Successfully withdrew $200.00"));
+        assertTrue("Should confirm withdrawal", output.contains("Withdrawal successful. Your new balance is $300.00"));
     }
 
     @Test
@@ -77,7 +77,7 @@ public class MenuTests {
         menu.showMainMenu();
         
         String output = outputStream.toString();
-        assertTrue("Should show insufficient funds", output.contains("Insufficient funds"));
+        assertTrue("Should show insufficient funds", output.contains("Insufficient funds in account."));
     }
 
     @Test
