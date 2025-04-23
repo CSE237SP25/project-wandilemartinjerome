@@ -14,6 +14,7 @@ import java.util.TimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
+import bankingapp.AccountType;
 import bankingapp.BankAccount;
 import bankingapp.RecurringPayment;
 import bankingapp.Transaction;
@@ -32,7 +33,8 @@ public class RecurringPaymentTest {
 
     @Before
     public void setUp() {
-        account = new BankAccount(1000.0); // Start with $1000
+        // Explicitly create a CHECKING account to ensure withdrawals work
+        account = new BankAccount(1000.0, AccountType.CHECKING);
         
         // Set up a fixed test date
         startDate = getDate(2025, Calendar.APRIL, 22);
@@ -117,7 +119,7 @@ public class RecurringPaymentTest {
     @Test
     public void testInsufficientFundsForRecurringPayment() {
         System.setProperty("test.current.time", "2020-01-01T10:00:00"); // Set current time for test
-        BankAccount account = new BankAccount(100.0); // Start with 100
+        BankAccount account = new BankAccount(100.0, AccountType.CHECKING); // Start with 100
         Date startDate = getDate(2020, Calendar.JANUARY, 1);
         account.scheduleRecurringPayment(
                 75.0, "Monthly Subscription", startDate, 
@@ -142,7 +144,7 @@ public class RecurringPaymentTest {
     @Test
     public void testPaymentCancellation() {
         System.setProperty("test.current.time", "2020-01-01T10:00:00");
-        BankAccount account = new BankAccount(200.0);
+        BankAccount account = new BankAccount(200.0, AccountType.CHECKING);
         Date startDate = getDate(2020, Calendar.JANUARY, 1);
         account.scheduleRecurringPayment(
                 50.0, "Gym Membership", startDate, 
@@ -172,7 +174,7 @@ public class RecurringPaymentTest {
         long jan1_2020_millis = getDate(2020, Calendar.JANUARY, 1).getTime();
         System.setProperty("test.current.time", String.valueOf(jan1_2020_millis));
         
-        BankAccount account = new BankAccount(500.0);
+        BankAccount account = new BankAccount(500.0, AccountType.CHECKING);
         Date startDate = getDate(2020, Calendar.JANUARY, 1); // Start Jan 1st
         account.scheduleRecurringPayment(
                 50.0, "Daily Test", startDate, 
@@ -199,7 +201,7 @@ public class RecurringPaymentTest {
         long jan15_2020_millis = getDate(2020, Calendar.JANUARY, 15).getTime();
         System.setProperty("test.current.time", String.valueOf(jan15_2020_millis));
         
-        BankAccount account = new BankAccount(500.0);
+        BankAccount account = new BankAccount(500.0, AccountType.CHECKING);
         Calendar testNow = account.getCurrentCalendar();
 
         // Scenario 1: Payment due today
@@ -262,7 +264,7 @@ public class RecurringPaymentTest {
     @Test
     public void testInsufficientFundsForRecurringPaymentWithZeroBalance() {
         // Set up account with just enough for one payment
-        BankAccount lowBalanceAccount = new BankAccount(100.0);
+        BankAccount lowBalanceAccount = new BankAccount(100.0, AccountType.CHECKING);
         
         // Set up a recurring payment for $100
         Date startDate = getDate(2020, Calendar.JANUARY, 1);
