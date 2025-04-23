@@ -9,7 +9,8 @@ public enum TransactionType {
     TRANSFER("Transfer"),
     LIMIT_CHANGE("Limit Change"),
     FAILED("Failed Transaction"),
-    ADMIN("Administrative Action");
+    ADMIN("Administrative Action"),
+    SCHEDULED("Scheduled");
 
     private final String displayName;
 

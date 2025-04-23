@@ -2,6 +2,7 @@ package bankingapp;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -23,8 +24,9 @@ public class BankAccount {
     private double maxWithdrawalLimit;
     private double maxDepositLimit;
 
-    // Transaction history
+    // Transaction history and scheduled transfers
     private List<Transaction> transactionHistory;
+    private List<ScheduledTransfer> scheduledTransfers;
 
     /**
      * Constructs a new bank account with an initial balance of 0.
@@ -34,6 +36,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
     }
 
     /**
@@ -46,6 +49,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = DEFAULT_MAX_WITHDRAWAL;
         this.maxDepositLimit = DEFAULT_MAX_DEPOSIT;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -64,6 +68,7 @@ public class BankAccount {
         this.maxWithdrawalLimit = maxWithdrawal;
         this.maxDepositLimit = maxDeposit;
         this.transactionHistory = new ArrayList<>();
+        this.scheduledTransfers = new ArrayList<>();
         // Record initial deposit if balance is positive
         if (initBalance > 0) {
             recordTransaction(TransactionType.DEPOSIT, initBalance, "Initial deposit");
@@ -250,5 +255,66 @@ public class BankAccount {
     public void clearTransactionHistory() {
         transactionHistory.clear();
         recordTransaction(TransactionType.ADMIN, 0, "Transaction history cleared");
+    }
+
+    /**
+     * Schedules a transfer to be executed at a future date.
+     * 
+     * @param destination The destination account
+     * @param amount The amount to transfer
+     * @param scheduledDate The date to execute the transfer
+     * @param description Description of the transfer
+     * @return The created ScheduledTransfer object
+     */
+    public ScheduledTransfer scheduleTransfer(BankAccount destination, double amount, Date scheduledDate, String description) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be positive");
+        }
+        if (destination == null) {
+            throw new IllegalArgumentException("Destination account cannot be null");
+        }
+        if (scheduledDate == null) {
+            throw new IllegalArgumentException("Scheduled date cannot be null");
+        }
+        if (scheduledDate.before(new Date())) {
+            throw new IllegalArgumentException("Scheduled date must be in the future");
+        }
+
+        ScheduledTransfer scheduledTransfer = new ScheduledTransfer(this, destination, amount, scheduledDate, description);
+        scheduledTransfers.add(scheduledTransfer);
+        recordTransaction(TransactionType.SCHEDULED, amount, "Scheduled transfer: " + description);
+        return scheduledTransfer;
+    }
+
+    /**
+     * Processes any scheduled transfers that are due.
+     * 
+     * @param currentDate The current date to check against
+     * @return The number of transfers processed
+     */
+    public int processScheduledTransfers(Date currentDate) {
+        int processed = 0;
+        Iterator<ScheduledTransfer> iterator = scheduledTransfers.iterator();
+        
+        while (iterator.hasNext()) {
+            ScheduledTransfer transfer = iterator.next();
+            if (transfer.isReadyToExecute(currentDate)) {
+                if (transfer.execute()) {
+                    processed++;
+                    iterator.remove();
+                }
+            }
+        }
+        
+        return processed;
+    }
+
+    /**
+     * Gets all scheduled transfers for this account.
+     * 
+     * @return List of scheduled transfers
+     */
+    public List<ScheduledTransfer> getScheduledTransfers() {
+        return new ArrayList<>(scheduledTransfers);
     }
 }
