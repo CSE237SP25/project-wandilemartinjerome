@@ -50,6 +50,21 @@ public class BankAccountTests {
         account.withdraw(25.0);
         assertEquals(25.0, account.getCurrentBalance(), 0.001);
     }
+
+    @Test
+    public void testWithdrawFromCheckingAccount() {
+        BankAccount checkingAccount = new BankAccount(100.0, AccountType.CHECKING);
+        checkingAccount.withdraw(50.0);
+        assertEquals(50.0, checkingAccount.getCurrentBalance(), 0.001);
+    }
+
+    @Test
+    public void testWithdrawFromSavingsAccount() {
+        BankAccount savingsAccount = new BankAccount(100.0, AccountType.SAVINGS);
+        assertThrows(IllegalArgumentException.class, () -> savingsAccount.withdraw(50.0));
+        assertEquals(100.0, savingsAccount.getCurrentBalance(), 0.001);
+    }
+
     
     @Test
     public void testNegativeWithdraw() {

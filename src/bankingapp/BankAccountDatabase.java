@@ -105,4 +105,8 @@ public class BankAccountDatabase {
     public Collection<AccountHolder> getAccountHolders() {
         return userAccounts.values();
     }
+    
+    public HashMap<Integer, BankAccount> getBankAccounts(){
+        return bankAccounts;
+    }
 }

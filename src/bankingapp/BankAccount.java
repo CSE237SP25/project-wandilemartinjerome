@@ -193,7 +193,12 @@ public class BankAccount {
         }
         
         this.balance += amount;
-        recordTransaction(TransactionType.DEPOSIT, amount, "Deposit");
+        if(accountType == AccountType.CHECKING){
+            recordTransaction(TransactionType.DEPOSIT, amount, "Deposit Checkings");
+        }
+        else{
+            recordTransaction(TransactionType.DEPOSIT, amount, "Deposit Savings");
+        }
     }
 
     /**
@@ -206,6 +211,10 @@ public class BankAccount {
     public boolean withdraw(double amount) {
         if (amount < 0) {
             throw new IllegalArgumentException("Withdrawal amount cannot be negative");
+        }
+
+        if(accountType != AccountType.CHECKING){
+            throw new IllegalArgumentException("Can not witdrawl from Savings Account");
         }
         
         if (amount > this.maxWithdrawalLimit) {
