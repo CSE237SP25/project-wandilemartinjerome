@@ -2,6 +2,7 @@ package bankingapp;
 
 import java.util.List;
 import java.util.Scanner;
+import java.util.Date;
 import java.text.SimpleDateFormat;
 
 /**
@@ -14,8 +15,7 @@ import java.text.SimpleDateFormat;
 public class Menu {
     private Scanner scanner;
     private BankAccount currentAccount;
-    private AllUserAccount allAccounts;
-    private AdminAccount adminAccount;
+    private BankAccountDatabase accountDatabase;
     private AccountHolder currentAccountHolder;
     
     /**
@@ -24,8 +24,7 @@ public class Menu {
     public Menu() {
         scanner = new Scanner(System.in);
         currentAccount = new BankAccount(1000.0); // Default account with $1000
-        allAccounts = new AllUserAccount();
-        adminAccount = new AdminAccount();
+        accountDatabase = new BankAccountDatabase();
         currentAccountHolder = new AccountHolder();
     }
     
@@ -60,8 +59,9 @@ public class Menu {
             System.out.println("8. View Account Limits");
             System.out.println("9. View Personal Information");
             System.out.println("10. Change Password");
-            System.out.println("11. Exit");
-            System.out.print("Enter your choice (1-11): ");
+            System.out.println("11. Manage Recurring Payments");
+            System.out.println("12. Exit");
+            System.out.print("Enter your choice (1-12): ");
             
             int choice = getIntInput();
             
@@ -103,6 +103,9 @@ public class Menu {
                     changePassword();
                     break;
                 case 11:
+                    manageRecurringPayments();
+                    break;
+                case 12:
                     exit = true;
                     System.out.println("Thank you for using the Banking Application. Goodbye!");
                     break;
@@ -132,54 +135,89 @@ public class Menu {
      */
     private void createAccount() {
         System.out.println("\n----- Create a New Account -----");
-        
+
         // Get account holder information
         System.out.println("\nPlease enter your personal information:");
         System.out.print("Last Name: ");
         String lastName = scanner.nextLine();
-        
+
         System.out.print("Birthday (MM/DD/YYYY): ");
         String birthday = scanner.nextLine();
-        
+
         System.out.print("Social Security Number (SSN): ");
         int ssn = getIntInput();
-        
+
         System.out.print("Bank Code: ");
         int bankCode = getIntInput();
-        
+
         // Create new account holder with personal information
         currentAccountHolder = new AccountHolder();
         currentAccountHolder.setPersonalInfo(lastName, birthday, ssn, bankCode);
         currentAccountHolder.setPassword("default123"); // Set a default password
         currentAccountHolder.hidePersonalInfo(); // Hide personal info by default
-        
+
         // Add account holder to the system
-        allAccounts.AddAcount(currentAccountHolder);
+        accountDatabase.addAccountHolder(currentAccountHolder);
+        // Choose account category
+        System.out.println("\nSelect Account Category:");
+        System.out.println("1. Personal Account");
+        System.out.println("2. Business Account");
+        System.out.print("Select account category (1-2): ");
+        int accountCategoryChoice = getIntInput();
+        boolean isBusinessAccount = (accountCategoryChoice == 2);
         
+        // Choose account type
+        System.out.println("\nSelect Account Type:");
+        System.out.println("1. Checking");
+        System.out.println("2. Savings");
+        System.out.print("Enter your choice (1-2): ");
+        int accountTypeChoice = getIntInput();
+        AccountType accountType;
+        while (true) {
+            if (accountTypeChoice == 1) {
+                accountType = AccountType.CHECKING;
+                break;
+            } else if (accountTypeChoice == 2) {
+                accountType = AccountType.SAVINGS;
+                break;
+            } else {
+                System.out.println("Invalid choice. Please enter 1 for Checking or 2 for Savings.");
+                System.out.print("Enter your choice (1-2): ");
+                accountTypeChoice = getIntInput();
+            }
+        }
         System.out.print("\nEnter initial deposit amount (or 0 for empty account): ");
-        
+
         try {
             double initialAmount = Double.parseDouble(scanner.nextLine());
-            
+
             if (initialAmount < 0) {
                 System.out.println("Initial amount cannot be negative.");
                 return;
             }
-            
-            if (initialAmount == 0) {
-                currentAccount = new BankAccount();
+            // Create appropriate account type based on user choice
+            if (isBusinessAccount) {
+                currentAccount = initialAmount == 0 ? 
+                    new BusinessAccount(accountType) : new BusinessAccount(initialAmount, accountType);
+                System.out.println("\nBusiness Account created successfully!");
             } else {
-                currentAccount = new BankAccount(initialAmount);
+                currentAccount = initialAmount == 0 ? 
+                    new BankAccount(accountType) : new BankAccount(initialAmount, accountType);
+                System.out.println("\nPersonal Account created successfully!");
             }
-            
-            allAccounts.addAccount(currentAccount);
-            System.out.println("\nAccount created successfully!");
+
+            accountDatabase.addBankAccount(currentAccount);
+            accountDatabase.addBankAccount(currentAccount);
             System.out.println("Account number: " + currentAccount.hashCode());
+            System.out.println(accountType + " account created.");
             System.out.println("Current balance: $" + currentAccount.getCurrentBalance());
             
-            // Link the bank account to the account holder
-            currentAccountHolder.addBankAccount(currentAccountHolder, currentAccount.hashCode());
+            // Display account limits
+            System.out.println("Maximum withdrawal limit: $" + currentAccount.getMaxWithdrawalLimit());
+            System.out.println("Maximum deposit limit: $" + currentAccount.getMaxDepositLimit());
             
+            currentAccountHolder.addBankAccount(currentAccountHolder, currentAccount.hashCode());
+
             System.out.println("\nYour personal information has been saved.");
             System.out.println("Default password is: default123");
             System.out.println("Please change your password for security.");
@@ -199,8 +237,8 @@ public class Menu {
         
         try {
             int accountNumber = Integer.parseInt(scanner.nextLine().trim());
-            if (allAccounts.findAccount(accountNumber)) {
-                currentAccount = allAccounts.getAccount(accountNumber);
+            if (accountDatabase.hasBankAccount(accountNumber)) {
+                currentAccount = accountDatabase.getBankAccount(accountNumber);
                 // Find the account holder associated with this account
                 currentAccountHolder = findAccountHolder(accountNumber);
                 if (currentAccountHolder == null) {
@@ -227,7 +265,7 @@ public class Menu {
     private AccountHolder findAccountHolder(int accountNumber) {
         // This is a simplified implementation - in a real system, you'd want a more robust
         // way to associate accounts with account holders
-        for (AccountHolder holder : allAccounts.getAccountHolders()) {
+        for (AccountHolder holder : accountDatabase.getAccountHolders()) {
             if (holder.findBankAccount(holder, accountNumber)) {
                 return holder;
             }
@@ -662,5 +700,138 @@ public class Menu {
         currentAccountHolder.hidePersonalInfo();
         
         System.out.println("Password changed successfully!");
+    }
+
+    private void manageRecurringPayments() {
+        while (true) {
+            System.out.println("\nRecurring Payments Menu:");
+            System.out.println("1. View Active Recurring Payments");
+            System.out.println("2. Schedule New Recurring Payment");
+            System.out.println("3. Cancel Recurring Payment");
+            System.out.println("4. Process Due Payments");
+            System.out.println("5. Return to Main Menu");
+            System.out.print("Enter your choice (1-5): ");
+
+            int choice = getIntInput();
+
+            switch (choice) {
+                case 1:
+                    viewRecurringPayments();
+                    break;
+                case 2:
+                    scheduleNewRecurringPayment();
+                    break;
+                case 3:
+                    cancelRecurringPayment();
+                    break;
+                case 4:
+                    processDuePayments();
+                    break;
+                case 5:
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void viewRecurringPayments() {
+        List<RecurringPayment> payments = currentAccount.getRecurringPayments();
+        if (payments.isEmpty()) {
+            System.out.println("No recurring payments scheduled.");
+            return;
+        }
+
+        System.out.println("\nActive Recurring Payments:");
+        for (int i = 0; i < payments.size(); i++) {
+            RecurringPayment payment = payments.get(i);
+            if (payment.isActive()) {
+                System.out.printf("%d. Amount: $%.2f, Description: %s, Frequency: %s, Next Payment: %s%n",
+                    i + 1,
+                    payment.getAmount(),
+                    payment.getDescription(),
+                    payment.getFrequency(),
+                    new SimpleDateFormat("yyyy-MM-dd").format(payment.getNextPaymentDate()));
+            }
+        }
+    }
+
+    private void scheduleNewRecurringPayment() {
+        System.out.print("Enter payment amount: $");
+        double amount = getDoubleInput();
+
+        System.out.print("Enter payment description: ");
+        String description = scanner.nextLine();
+
+        System.out.print("Enter start date (YYYY-MM-DD): ");
+        Date startDate;
+        try {
+            startDate = new SimpleDateFormat("yyyy-MM-dd").parse(scanner.nextLine());
+        } catch (Exception e) {
+            System.out.println("Invalid date format. Please use YYYY-MM-DD.");
+            return;
+        }
+
+        System.out.println("Select payment frequency:");
+        System.out.println("1. Daily");
+        System.out.println("2. Weekly");
+        System.out.println("3. Monthly");
+        System.out.println("4. Yearly");
+        System.out.print("Enter your choice (1-4): ");
+        
+        RecurringPayment.PaymentFrequency frequency;
+        switch (getIntInput()) {
+            case 1:
+                frequency = RecurringPayment.PaymentFrequency.DAILY;
+                break;
+            case 2:
+                frequency = RecurringPayment.PaymentFrequency.WEEKLY;
+                break;
+            case 3:
+                frequency = RecurringPayment.PaymentFrequency.MONTHLY;
+                break;
+            case 4:
+                frequency = RecurringPayment.PaymentFrequency.YEARLY;
+                break;
+            default:
+                System.out.println("Invalid frequency choice.");
+                return;
+        }
+
+        System.out.print("Enter recipient account ID: ");
+        String recipientId = scanner.nextLine();
+
+        try {
+            currentAccount.scheduleRecurringPayment(amount, description, startDate, frequency, recipientId);
+            System.out.println("Recurring payment scheduled successfully!");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void cancelRecurringPayment() {
+        List<RecurringPayment> payments = currentAccount.getRecurringPayments();
+        if (payments.isEmpty()) {
+            System.out.println("No recurring payments to cancel.");
+            return;
+        }
+
+        viewRecurringPayments();
+        System.out.print("Enter the number of the payment to cancel: ");
+        int choice = getIntInput();
+
+        if (choice < 1 || choice > payments.size()) {
+            System.out.println("Invalid payment number.");
+            return;
+        }
+
+        RecurringPayment payment = payments.get(choice - 1);
+        currentAccount.cancelRecurringPayment(payment);
+        System.out.println("Recurring payment cancelled successfully!");
+    }
+
+    private void processDuePayments() {
+        int processed = currentAccount.processRecurringPayments();
+        System.out.printf("Processed %d recurring payment(s).%n", processed);
     }
 }

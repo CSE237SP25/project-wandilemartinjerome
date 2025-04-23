@@ -11,6 +11,7 @@ public enum TransactionType {
     FAILED("Failed Transaction"),
     ADMIN("Administrative Action"),
     SCHEDULED("Scheduled");
+    RECURRING_PAYMENT("Recurring Payment");
 
     private final String displayName;
 

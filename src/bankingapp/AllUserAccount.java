@@ -3,6 +3,13 @@ package bankingapp;
 import java.util.HashMap;
 import java.util.Collection;
 
+/**
+ * Manages all user and bank accounts in the system.
+ * 
+ * @author Martin Rivera
+ * @author Wandile Hannah
+ * @author Jerome Hsing
+ */
 public class AllUserAccount {
 	private HashMap<Integer, AccountHolder> UserAccounts = new HashMap<>();
 	private HashMap<Integer, BankAccount> BankAccounts = new HashMap<>();
