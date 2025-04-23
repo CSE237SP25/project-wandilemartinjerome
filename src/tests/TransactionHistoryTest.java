@@ -3,6 +3,7 @@ package tests;
 import org.junit.Test;
 import java.util.List;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import bankingapp.BankAccount;
 import bankingapp.Transaction;
 import bankingapp.TransactionType;
@@ -12,7 +13,8 @@ public class TransactionHistoryTest {
     public void testTransactionHistory() {
         BankAccount account = new BankAccount(100);
         account.deposit(50);
-        account.withdraw(25);
+        boolean withdrawSuccess = account.withdraw(25);
+        assertTrue(withdrawSuccess);
     
         List<Transaction> history = account.getTransactionHistory();
         assertEquals(3, history.size()); // Initial deposit + deposit + withdrawal

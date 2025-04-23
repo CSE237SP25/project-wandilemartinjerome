@@ -9,14 +9,16 @@ public enum TransactionType {
     TRANSFER("Transfer"),
     LIMIT_CHANGE("Limit Change"),
     FAILED("Failed Transaction"),
-    ADMIN("Administrative Action");
+    ADMIN("Administrative Action"),
+    SCHEDULED("Scheduled"),
+    RECURRING_PAYMENT("Recurring Payment");
 
     private final String displayName;
 
     private TransactionType(String displayName) {
         this.displayName = displayName;
     }
-   
+
     public String getDisplayName() {
         return displayName;
     }
