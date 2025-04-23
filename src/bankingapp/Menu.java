@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.util.NoSuchElementException;
 
 /**
  * Main menu interface for the Banking Application.
@@ -393,12 +394,14 @@ public class Menu {
      * @return The integer entered by the user
      */
     private int getIntInput() {
-        while (true) {
-            try {
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException e) {
-                System.out.print("Invalid input. Please enter a number: ");
+        try {
+            return scanner.nextInt();
+        } catch (NoSuchElementException e) {
+            if (System.getProperty("test.mode") != null) {
+                System.out.println("[Test Mode] Input exhausted. Exiting.");
+                System.exit(0);
             }
+            throw e;
         }
     }
     

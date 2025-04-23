@@ -44,13 +44,13 @@ if [ ! -f "lib/hamcrest-core-1.3.jar" ]; then
 fi
 
 # Compile all Java files including tests
-javac -d bin -cp lib/junit-4.13.2.jar:lib/junit-jupiter-api-5.9.1.jar:lib/hamcrest-core-1.3.jar src/bankingapp/*.java src/tests/*.java
+javac -d bin -cp "lib/*" src/bankingapp/*.java src/tests/*.java
 
 # Run the tests
 echo "Running Tests..."
 
 # Use JUnit 5 for the tests
 echo "Running tests with JUnit 5..."
-java -jar lib/junit-platform-console-standalone-1.9.1.jar --class-path bin --scan-classpath
+java -jar lib/junit-platform-console-standalone-1.9.1.jar --class-path "lib/*:bin" --scan-classpath
 
 echo "Done!"

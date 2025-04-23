@@ -9,7 +9,7 @@ public class CompoundInterest implements Runnable {
     private final BankAccountDatabase bankAccounts;
     private final long intervalMillis;
     private static final double INTEREST_RATE = 0.20; // 20% interest rate
-    private static boolean interestAppliedForTest = false;
+    private static volatile boolean interestAppliedForTest = false;
 
     public CompoundInterest(BankAccountDatabase bankAccounts, long intervalMillis) {
         this.bankAccounts = bankAccounts;
