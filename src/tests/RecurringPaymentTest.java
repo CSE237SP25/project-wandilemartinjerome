@@ -1,4 +1,3 @@
-
 package tests;
 
 import static org.junit.Assert.assertEquals;
@@ -30,20 +29,13 @@ import bankingapp.TransactionType;
 public class RecurringPaymentTest {
     private BankAccount account;
     private Date startDate;
-    private Calendar calendar;
 
     @Before
     public void setUp() {
         account = new BankAccount(1000.0); // Start with $1000
         
         // Set up a fixed test date
-        calendar = Calendar.getInstance();
-        calendar.set(2025, Calendar.APRIL, 22, 0, 0, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        startDate = calendar.getTime();
-        
-        // Set the same date for RecurringPayment's internal date checks
-        System.setProperty("test.current.time", String.valueOf(startDate.getTime()));
+        startDate = getDate(2025, Calendar.APRIL, 22);
     }
 
     @Test
@@ -108,9 +100,6 @@ public class RecurringPaymentTest {
             "MONTHLY001"
         );
         
-        // Set test time to the start date
-        System.setProperty("test.current.time", String.valueOf(startDate.getTime()));
-
         // Process payments - should process one payment
         int processed = account.processRecurringPayments();
         assertEquals("Should process one payment", 1, processed);
@@ -318,7 +307,7 @@ public class RecurringPaymentTest {
 
     // Helper to create Date objects easily
     private Date getDate(int year, int month, int day) {
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT-5"));
         calendar.set(year, month, day, 0, 0, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTime();
