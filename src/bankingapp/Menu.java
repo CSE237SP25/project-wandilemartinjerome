@@ -293,7 +293,7 @@ public class Menu {
      */
     private void checkBalance() {
         if (accountExists()) {
-            System.out.printf("Current Balance: $%.2f%n", currentAccount.getCurrentBalance());
+            System.out.printf("Current balance: $%.2f%n", currentAccount.getCurrentBalance());
         }
     }
     

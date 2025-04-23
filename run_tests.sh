@@ -44,13 +44,23 @@ if [ ! -f "lib/hamcrest-core-1.3.jar" ]; then
 fi
 
 # Compile all Java files including tests
-javac -d bin -cp "lib/*" src/bankingapp/*.java src/tests/*.java
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    CLASSPATH="lib/junit-platform-console-standalone-1.9.1.jar;lib/junit-4.13.2.jar;lib/hamcrest-core-1.3.jar"
+else
+    CLASSPATH="lib/junit-platform-console-standalone-1.9.1.jar:lib/junit-4.13.2.jar:lib/hamcrest-core-1.3.jar"
+fi
+
+javac -d bin -cp "$CLASSPATH" src/bankingapp/*.java src/tests/*.java
 
 # Run the tests
 echo "Running Tests..."
 
 # Use JUnit 5 for the tests
 echo "Running tests with JUnit 5..."
-java -jar lib/junit-platform-console-standalone-1.9.1.jar --class-path "lib/*:bin" --scan-classpath
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    java -jar lib/junit-platform-console-standalone-1.9.1.jar --class-path "$CLASSPATH;bin" --scan-classpath
+else
+    java -jar lib/junit-platform-console-standalone-1.9.1.jar --class-path "$CLASSPATH:bin" --scan-classpath
+fi
 
 echo "Done!"
