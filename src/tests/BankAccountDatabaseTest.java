@@ -10,19 +10,16 @@ import bankingapp.AccountHolder;
 public class BankAccountDatabaseTest {
     private BankAccountDatabase database;
     private AccountHolder accountHolder;
-    private BankAccount bankAccount;
     
     private static final String TEST_LASTNAME = "Doe";
     private static final String TEST_BIRTHDAY = "01/01/1990";
     private static final int TEST_SSN = 123456789;
     private static final int TEST_BANK_CODE = 1234;
-    private static final double INITIAL_BALANCE = 1000.0;
 
     @Before
     public void setUp() {
         database = new BankAccountDatabase();
         accountHolder = new AccountHolder(TEST_LASTNAME, TEST_BIRTHDAY, TEST_SSN, TEST_BANK_CODE);
-        bankAccount = new BankAccount(INITIAL_BALANCE);
     }
 
     @Test
