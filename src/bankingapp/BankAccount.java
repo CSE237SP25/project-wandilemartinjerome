@@ -238,11 +238,10 @@ public class BankAccount {
             throw new IllegalArgumentException("Withdrawal amount cannot be negative");
         }
 
-        // Only block withdrawals from savings in production, not in tests
-        // Remove restriction: allow withdrawals from savings always
-        // if(accountType != AccountType.CHECKING && !System.getProperty("test.mode").equals("true")){
-        //     throw new IllegalArgumentException("Can not witdrawl from Savings Account");
-        // }
+        // Block withdrawals from savings accounts (test expects exception)
+        if (accountType == AccountType.SAVINGS) {
+            throw new IllegalArgumentException("Can not withdraw from Savings Account");
+        }
 
         if (amount > this.maxWithdrawalLimit) {
             throw new IllegalArgumentException("Withdrawal amount exceeds maximum limit of $" + this.maxWithdrawalLimit);

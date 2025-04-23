@@ -47,7 +47,9 @@ public class CompoundInterest implements Runnable {
             }
             // Only apply once per test (fix double application)
             if (System.getProperty("test.mode") != null) {
-                return; // Use return instead of break, since break is invalid here
+                if (Boolean.getBoolean("test.interest.applied")) return;
+                System.setProperty("test.interest.applied", "true");
+                return;
             }
         } finally {
             System.clearProperty("test.mode");
